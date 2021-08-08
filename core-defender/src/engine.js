@@ -7,7 +7,7 @@ let gameState = "MainMenu";
 const customFont = 'Orbitron'; // Verdana
 
 let enemySpawnRate = 600;
-let frame = 1;
+let frame = 0;
 const startTPower = 100;
 let tPower = startTPower;
 let score = 0;
@@ -157,7 +157,7 @@ class Cell {
     // Cell draw function
     draw(){
         if (mouse.x && mouse.y && collision(this,mouse)){
-            ctx.strokeStyle = 'black';
+            ctx.strokeStyle = 'Gold';
             ctx.strokeRect(this.x, this.y, this.width, this.height);
         }
     }
@@ -441,9 +441,9 @@ function update(){
     ctx.fillRect(0,0,controlBar.width,controlBar.height);
     handleGameGrid();
     handleTowers();
-    handleResource();
     handleEnemies();
     handleProjectiles();
+    handleResource();
     handleGameStatus();
     frame++;
     if (!canClick){
