@@ -1,5 +1,6 @@
 # core-defender
-Place defenders on a grid to stop enemies from attacking your power core!
+Place defenders on a grid to stop enemies from attacking your power core! 
+(based on a tutorial by Franks laboratory)
 
 Tutorial Found Here ->
 https://youtu.be/QxYg8-mhhhs
