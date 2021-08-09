@@ -42,7 +42,6 @@ let canvasPosition = canvas.getBoundingClientRect();
 
 window.addEventListener('resize', function(){
     canvasPosition = canvas.getBoundingClientRect();
-    console.log(canvasPosition);
 });
 
 
@@ -72,7 +71,7 @@ canvas.addEventListener('mousedown', function(e){
     if (gridPositionY < cellSize) return;
     for (let i = 0; i < towers.length; i++){
         if (towers[i].x === gridPositionX && towers[i].y === gridPositionY){
-            floatingMessages.push(new FloatingMessage("Can't Stack", "Red", 'center', mouse.x, gridPositionY+30, 20)); 
+            floatingMessages.push(new FloatingMessage("Can't Stack", "Red", 'center', mouse.x, gridPositionY+30, 25, 0.02)); 
         }
 
         if (towers[i].x === gridPositionX && towers[i].y === gridPositionY)
@@ -84,7 +83,7 @@ canvas.addEventListener('mousedown', function(e){
         tPower -= towerCost;
     } else {
         if (tPower <= towerCost){
-            floatingMessages.push(new FloatingMessage(`Not enough Power ${towerCost - tPower}`, "Red", 'center', mouse.x, gridPositionY+30, 20));
+            floatingMessages.push(new FloatingMessage(`Needs Energy ${towerCost - tPower}`, "Red", 'center', mouse.x, gridPositionY+30, 25, 0.02));
         }
     }
 });
@@ -109,6 +108,7 @@ function reset(){
     enemyPositions.length = 0;
     projectiles.length = 0;
     floatingMessages.length = 0;
+    gameGrid.length = 0;
     enemySpawnRate = 600;
     frame = 1;
     tPower = startTPower;
@@ -116,6 +116,7 @@ function reset(){
     gameState = "Playing";
     // mainMenu();
     update();
+    createGrid();
 }
 
 // Show Main Menu
@@ -152,7 +153,7 @@ function wonLevel(){
     ctx.textAlign = 'center';
     ctx.fillStyle = 'Gold';
     ctx.font = `70px ${customFont}`;
-    ctx.fillText("!You Survived!", canvas.width/2, canvas.height/2-40);
+    ctx.fillText("You Survived", canvas.width/2, canvas.height/2-40);
 
     ctx.font = `30px ${customFont}`;
     ctx.fillText("Click Mouse To Play Again", canvas.width/2, canvas.height/2+40);
@@ -166,9 +167,16 @@ class Cell {
         this.y = y;
         this.width = cellSize;
         this.height = cellSize;
+        this.image = new Image();
+        this.images = ['src/Images/Tile_01.png', 'src/Images/Tile_02.png', 'src/Images/Tile_04.png', 'src/Images/Tile_05.png'];
+        this.image.src =  this.images[Math.floor(Math.random() * this.images.length)];
     }
     // Cell draw function
     draw(){
+
+        ctx.fillStyle = 'Gold';
+        ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+
         if (mouse.x && mouse.y && collision(this,mouse)){
             ctx.strokeStyle = 'Gold';
             ctx.strokeRect(this.x, this.y, this.width, this.height);
@@ -185,7 +193,6 @@ function createGrid(){
         }
     }
 }
-createGrid();
 
 
 // Cycle through grid array
@@ -201,8 +208,8 @@ class Projectile {
     constructor(x, y){
         this.x = x;
         this.y = y;
-        this.width = 10;
-        this.height = 10;
+        this.width = 18;
+        this.height = 8;
         this.dmg = 20;
         this.speed = 5;
     }
@@ -214,10 +221,11 @@ class Projectile {
 
     // Projectile draw function
     draw(){
-        ctx.fillStyle = 'black';
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.width, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.fillStyle = 'red';
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+        // ctx.beginPath();
+        // ctx.arc(this.x, this.y, this.width, 0, Math.PI * 2);
+        // ctx.fill();
     }
 }
 
@@ -232,6 +240,7 @@ function handleProjectiles(){
         for (let j = 0; j < enemies.length; j++){
             if (enemies[j] && projectiles[i] && collision(enemies[j], projectiles[i])){
                 enemies[j].health -= projectiles[i].dmg;
+                floatingMessages.push(new FloatingMessage(`${enemies[j].health}`, "Red", 'center', enemies[j].x, enemies[j].y+30, 20, 0.03));
                 projectiles.splice(i, 1);
                 i--;
             }
@@ -265,7 +274,7 @@ class Tower {
         if(this.shooting){
             this.timer++;
             if (this.timer % 100 === 0){
-                projectiles.push(new Projectile(this.x+this.width-10, this.y+30));
+                projectiles.push(new Projectile(this.x+this.width-10, this.y+28));
             }
         } else {
             this.timer = 0;
@@ -324,6 +333,8 @@ class Enemy {
         this.movement = this.speed;
         this.health = 100;
         this.maxHealth = this.health;
+        this.image = new Image();
+        this.image.src = 'src/Images/Enemy_01.png';
     }
 
     // Enemy update function
@@ -333,13 +344,14 @@ class Enemy {
 
     // Enemy draw function
     draw(){
-        ctx.fillStyle = 'red';
-        ctx.fillRect(this.x, this.y, this.width, this.height);
+        // ctx.fillStyle = 'red';
+        // ctx.fillRect(this.x, this.y, this.width, this.height);
+        ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
 
-        ctx.textAlign = 'center';
-        ctx.fillStyle = 'Gold';
-        ctx.font = `30px ${customFont}`;
-        ctx.fillText(Math.floor(this.health), this.x+this.width/2, this.y+30);
+        // ctx.textAlign = 'center';
+        // ctx.fillStyle = 'Gold';
+        // ctx.font = `30px ${customFont}`;
+        // ctx.fillText(Math.floor(this.health), this.x+this.width/2, this.y+30);
     }
 }
 
@@ -358,6 +370,7 @@ function handleEnemies(){
         }
         if (enemies[i] && enemies[i].health <= 0){
             let gainedPower = enemies[i].maxHealth/10;
+            floatingMessages.push(new FloatingMessage(`+${gainedPower}`, "SkyBlue", 'center', enemies[i].x+enemies[i].width/2, enemies[i].y+30, 20, 0.02));
             tPower += gainedPower;
             score += gainedPower;
             const findThisIndex = enemyPositions.indexOf(enemies[i].y);
@@ -407,6 +420,7 @@ function handleResource(){
     for (let i = 0; i < resources.length; i++){
         resources[i].draw();
         if (resources[i] && mouse.x && mouse.y && collision(resources[i], mouse)){
+            floatingMessages.push(new FloatingMessage(`+${resources[i].amount}`, "SkyBlue", 'center', mouse.x, resources[i].y, 25, 0.02));
             tPower += resources[i].amount;
             score += resources[i].amount;
             resources.splice(i, 1);
@@ -418,7 +432,7 @@ function handleResource(){
 
 // Floating Messages
 class FloatingMessage {
-    constructor(text, color, align, x, y, size){
+    constructor(text, color, align, x, y, size, fade){
         this.text = text;
         this.color = color;
         this.align = align;
@@ -427,14 +441,14 @@ class FloatingMessage {
         this.size = size;
         this.lifeSpan = 0;
         this.opacity = 1;
+        this.fade = fade;
     }
 
     // Floating Messages update funtion
     update(){
         this.y -= 0.3;
         this.lifeSpan += 1;
-        console.log(this.lifeSpan);
-        if (this.opacity > 0.03) this.opacity -= 0.03;
+        if (this.opacity > this.fade) this.opacity -= this.fade;
     }
 
     // Floating Messages draw funtion
