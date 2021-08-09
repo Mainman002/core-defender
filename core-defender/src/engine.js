@@ -20,6 +20,7 @@ const enemies = [];
 const enemyPositions = [];
 const projectiles = [];
 const resources = [];
+const floatingMessages = [];
 const winningScore = 300;
 
 const controlBar = {
@@ -70,13 +71,19 @@ canvas.addEventListener('mousedown', function(e){
     const gridPositionY = mouse.y - (mouse.y % cellSize);
     if (gridPositionY < cellSize) return;
     for (let i = 0; i < towers.length; i++){
-        if (towers[i].x === gridPositionX && towers[i].y === gridPositionY) 
+        if (towers[i].x === gridPositionX && towers[i].y === gridPositionY){
+            floatingMessages.push(new FloatingMessage("Can't Stack", "Red", 'center', mouse.x, gridPositionY+30, 20)); 
+        }
+        
+        if (towers[i].x === gridPositionX && towers[i].y === gridPositionY)
         return;
     }
     let towerCost = 50;
     if (canClick && tPower >= towerCost){
         towers.push(new Tower(gridPositionX, gridPositionY));
         tPower -= towerCost;
+    } else {
+        floatingMessages.push(new FloatingMessage("Not enough Power", "Red", 'center', mouse.x, gridPositionY+30, 20));
     }
 });
 
@@ -95,10 +102,11 @@ function reset(){
     canClick = false;
     clickTimer = 1;
     resources.length = 0;
-    towers.length = 0
-    enemies.length = 0
-    enemyPositions.length = 0
-    projectiles.length = 0
+    towers.length = 0;
+    enemies.length = 0;
+    enemyPositions.length = 0;
+    projectiles.length = 0;
+    floatingMessages.length = 0;
     enemySpawnRate = 600;
     frame = 1;
     tPower = startTPower;
@@ -110,6 +118,7 @@ function reset(){
 
 // Show Main Menu
 function mainMenu(){
+    floatingMessages.length = 0;
     ctx.clearRect(0,0,canvas.width,canvas.height);
     ctx.textAlign = 'center';
     ctx.fillStyle = 'Gold';
@@ -122,6 +131,7 @@ function mainMenu(){
 
 // Show Game Over
 function gameOver(){
+    floatingMessages.length = 0;
     ctx.clearRect(0,0,canvas.width,canvas.height);
     ctx.textAlign = 'center';
     ctx.fillStyle = 'Gold';
@@ -135,6 +145,7 @@ function gameOver(){
 
 // Show Won Level
 function wonLevel(){
+    floatingMessages.length = 0;
     ctx.clearRect(0,0,canvas.width,canvas.height);
     ctx.textAlign = 'center';
     ctx.fillStyle = 'Gold';
@@ -300,6 +311,57 @@ function handleTowers(){
 }
 
 
+// Floating Messages
+class FloatingMessage {
+    constructor(text, color, align, x, y, size){
+        this.text = text;
+        this.color = color;
+        this.align = align;
+        this.x = x;
+        this.y = y;
+        this.size = size;
+        this.lifeSpan = 0;
+        this.opacity = 1;
+    }
+
+    // Floating Messages update funtion
+    update(){
+        this.y -= 0.3;
+        this.lifeSpan += 1;
+        console.log(this.lifeSpan);
+        if (this.opacity > 0.01) this.opacity -= 0.01;
+    }
+
+    // Floating Messages draw funtion
+    draw(){
+        ctx.globalAlpha = this.opacity;
+        // ctx.fillStyle = this.color;
+        // ctx.font = `25px ${customFont}`;
+        // ctx.fillText(this.text, this.x, this.y);
+
+        ctx.textAlign = this.align;
+        ctx.fillStyle = this.color;
+        ctx.font = `${this.size}px ${customFont}`;
+        ctx.fillText(this.text, this.x, this.y);
+
+        ctx.globalAlpha = 1;
+    }
+}
+
+
+// Handle Floating Messages draw funtion
+function handleFloatingMessages(){
+    for (let i = 0; i < floatingMessages.length; i++){
+        floatingMessages[i].update();
+        floatingMessages[i].draw();
+        if (floatingMessages[i] && floatingMessages[i].lifeSpan >= 50){
+            floatingMessages.splice(i, 1);
+            i--;
+        }
+    }
+}
+
+
 // Enemy class
 class Enemy {
     constructor(verticalPos){
@@ -405,6 +467,7 @@ function handleResource(){
 
 // UI Status
 function handleGameStatus(){
+
     // Tower Power
     ctx.fillStyle = 'gold';
     ctx.textAlign = 'left';
@@ -445,6 +508,7 @@ function update(){
     handleProjectiles();
     handleResource();
     handleGameStatus();
+    handleFloatingMessages();
     frame++;
     if (!canClick){
         clickTimer++;
