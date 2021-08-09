@@ -74,7 +74,7 @@ canvas.addEventListener('mousedown', function(e){
         if (towers[i].x === gridPositionX && towers[i].y === gridPositionY){
             floatingMessages.push(new FloatingMessage("Can't Stack", "Red", 'center', mouse.x, gridPositionY+30, 20)); 
         }
-        
+
         if (towers[i].x === gridPositionX && towers[i].y === gridPositionY)
         return;
     }
@@ -83,7 +83,9 @@ canvas.addEventListener('mousedown', function(e){
         towers.push(new Tower(gridPositionX, gridPositionY));
         tPower -= towerCost;
     } else {
-        floatingMessages.push(new FloatingMessage("Not enough Power", "Red", 'center', mouse.x, gridPositionY+30, 20));
+        if (tPower <= towerCost){
+            floatingMessages.push(new FloatingMessage(`Not enough Power ${towerCost - tPower}`, "Red", 'center', mouse.x, gridPositionY+30, 20));
+        }
     }
 });
 
@@ -329,7 +331,7 @@ class FloatingMessage {
         this.y -= 0.3;
         this.lifeSpan += 1;
         console.log(this.lifeSpan);
-        if (this.opacity > 0.01) this.opacity -= 0.01;
+        if (this.opacity > 0.03) this.opacity -= 0.03;
     }
 
     // Floating Messages draw funtion
