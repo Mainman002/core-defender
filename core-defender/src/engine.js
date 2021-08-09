@@ -167,15 +167,17 @@ class Cell {
         this.y = y;
         this.width = cellSize;
         this.height = cellSize;
+        this.sprite = {'w':256, 'h':256};
         this.image = new Image();
-        this.images = ['src/Images/Tile_01.png', 'src/Images/Tile_02.png', 'src/Images/Tile_04.png', 'src/Images/Tile_05.png'];
-        this.image.src =  this.images[Math.floor(Math.random() * this.images.length)];
+        this.image.src = "src/Images/Floor_Tiles.png";
+        this.maxFrame = 6;
+        this.frame = Math.floor(Math.random() * this.maxFrame);
     }
     // Cell draw function
     draw(){
 
         ctx.fillStyle = 'Gold';
-        ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+        ctx.drawImage(this.image, this.frame*this.sprite.w, 0, this.sprite.w, this.sprite.h, this.x, this.y, this.width, this.height);
 
         if (mouse.x && mouse.y && collision(this,mouse)){
             ctx.strokeStyle = 'Gold';
