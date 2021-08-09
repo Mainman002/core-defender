@@ -304,61 +304,10 @@ function handleTowers(){
                towers[i].health -= 1; 
             }
             if (towers[i] && towers[i].health <= 0){
+                enemies[j].movement = enemies[j].speed;
                 towers.splice(i, 1);
                 i--;
-                enemies[j].movement = enemies[j].speed;
             }
-        }
-    }
-}
-
-
-// Floating Messages
-class FloatingMessage {
-    constructor(text, color, align, x, y, size){
-        this.text = text;
-        this.color = color;
-        this.align = align;
-        this.x = x;
-        this.y = y;
-        this.size = size;
-        this.lifeSpan = 0;
-        this.opacity = 1;
-    }
-
-    // Floating Messages update funtion
-    update(){
-        this.y -= 0.3;
-        this.lifeSpan += 1;
-        console.log(this.lifeSpan);
-        if (this.opacity > 0.03) this.opacity -= 0.03;
-    }
-
-    // Floating Messages draw funtion
-    draw(){
-        ctx.globalAlpha = this.opacity;
-        // ctx.fillStyle = this.color;
-        // ctx.font = `25px ${customFont}`;
-        // ctx.fillText(this.text, this.x, this.y);
-
-        ctx.textAlign = this.align;
-        ctx.fillStyle = this.color;
-        ctx.font = `${this.size}px ${customFont}`;
-        ctx.fillText(this.text, this.x, this.y);
-
-        ctx.globalAlpha = 1;
-    }
-}
-
-
-// Handle Floating Messages draw funtion
-function handleFloatingMessages(){
-    for (let i = 0; i < floatingMessages.length; i++){
-        floatingMessages[i].update();
-        floatingMessages[i].draw();
-        if (floatingMessages[i] && floatingMessages[i].lifeSpan >= 50){
-            floatingMessages.splice(i, 1);
-            i--;
         }
     }
 }
@@ -467,6 +416,57 @@ function handleResource(){
 }
 
 
+// Floating Messages
+class FloatingMessage {
+    constructor(text, color, align, x, y, size){
+        this.text = text;
+        this.color = color;
+        this.align = align;
+        this.x = x;
+        this.y = y;
+        this.size = size;
+        this.lifeSpan = 0;
+        this.opacity = 1;
+    }
+
+    // Floating Messages update funtion
+    update(){
+        this.y -= 0.3;
+        this.lifeSpan += 1;
+        console.log(this.lifeSpan);
+        if (this.opacity > 0.03) this.opacity -= 0.03;
+    }
+
+    // Floating Messages draw funtion
+    draw(){
+        ctx.globalAlpha = this.opacity;
+        // ctx.fillStyle = this.color;
+        // ctx.font = `25px ${customFont}`;
+        // ctx.fillText(this.text, this.x, this.y);
+
+        ctx.textAlign = this.align;
+        ctx.fillStyle = this.color;
+        ctx.font = `${this.size}px ${customFont}`;
+        ctx.fillText(this.text, this.x, this.y);
+
+        ctx.globalAlpha = 1;
+    }
+}
+
+
+// Handle Floating Messages draw funtion
+function handleFloatingMessages(){
+    for (let i = 0; i < floatingMessages.length; i++){
+        floatingMessages[i].update();
+        floatingMessages[i].draw();
+        if (floatingMessages[i] && floatingMessages[i].lifeSpan >= 50){
+            floatingMessages.splice(i, 1);
+            i--;
+        }
+    }
+}
+
+
 // UI Status
 function handleGameStatus(){
 
@@ -481,7 +481,7 @@ function handleGameStatus(){
     ctx.font = `30px ${customFont}`;
     ctx.fillText(`${score}`, canvas.width-20, 55);
 
-    if (score >= winningScore && enemies.length <= 0){
+    if (gameState !== "GameOver" && score >= winningScore && enemies.length <= 0){
         gameState = "WonLevel";
     }
 
