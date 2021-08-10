@@ -242,11 +242,11 @@ class Projectile {
         this.towerType = type;
 
         if (this.towerType === 1){
-            this.dmg = 20;
-            this.speed = 7;
+            this.dmg = 10;
+            this.speed = 5;
         } else if (this.towerType === 2){
-            this.dmg = 15;
-            this.speed = 7;
+            this.dmg = 10;
+            this.speed = 5;
         }
     }
 
