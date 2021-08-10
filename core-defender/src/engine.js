@@ -6,6 +6,20 @@ canvas.height = 600;
 let gameState = "MainMenu";
 const customFont = 'Orbitron'; // Verdana
 
+// Game Image Assets
+
+// Enemies
+const enemyImages = new Image();
+const enemyTypes = 4;
+enemyImages.src = 'src/Images/Enemies.png';
+
+// Towers
+const towerImages = new Image();
+const towerTypes = 2;
+towerImages.src = 'src/Images/Towers.png';
+let choosenTower = 1;
+
+// Game Variables
 let enemySpawnRate = 600;
 let frame = 0;
 const startTPower = 100;
@@ -34,6 +48,7 @@ const mouse = {
     y: 10,
     width: 0.1,
     height: 0.1,
+    clicked: false,
 }
 let clickTimer = 1;
 let canClick = false;
@@ -41,7 +56,11 @@ let canvasPosition = canvas.getBoundingClientRect();
 
 
 window.addEventListener('resize', function(){
+    // canvas.width = window.innerWidth;
+    // canvas.height = window.innerHeight;
     canvasPosition = canvas.getBoundingClientRect();
+    // ctx.scale(9,6);
+    // ctx.setTransform(1, 0, 0, 1, 0, 0);
 });
 
 
@@ -61,6 +80,8 @@ canvas.addEventListener('mouseleave', function(e){
 
 // Mouse Down Event
 canvas.addEventListener('mousedown', function(e){
+    mouse.clicked = true;
+
     if (gameState === "MainMenu" || gameState === "GameOver" || gameState === "WonLevel"){
         gameState = "Playing";
         reset();
@@ -86,6 +107,10 @@ canvas.addEventListener('mousedown', function(e){
             floatingMessages.push(new FloatingMessage(`Needs Energy ${towerCost - tPower}`, "Red", 'center', mouse.x, gridPositionY+30, 25, 0.02));
         }
     }
+});
+
+canvas.addEventListener('mouseup', function(e){
+    mouse.clicked = false;
 });
 
 
@@ -207,13 +232,22 @@ function handleGameGrid(){
 
 // Projectile class
 class Projectile {
-    constructor(x, y){
+    constructor(x, y, type){
         this.x = x;
         this.y = y;
         this.width = 18;
         this.height = 8;
         this.dmg = 20;
         this.speed = 5;
+        this.towerType = type;
+
+        if (this.towerType === 1){
+            this.dmg = 20;
+            this.speed = 7;
+        } else if (this.towerType === 2){
+            this.dmg = 15;
+            this.speed = 7;
+        }
     }
 
     // Projectile update function
@@ -225,9 +259,6 @@ class Projectile {
     draw(){
         ctx.fillStyle = 'red';
         ctx.fillRect(this.x, this.y, this.width, this.height);
-        // ctx.beginPath();
-        // ctx.arc(this.x, this.y, this.width, 0, Math.PI * 2);
-        // ctx.fill();
     }
 }
 
@@ -249,7 +280,7 @@ function handleProjectiles(){
         }
 
 
-        if (projectiles[i] && projectiles[i].x > canvas.width - cellSize){
+        if (projectiles[i] && projectiles[i].x > canvas.width - cellSize/2){
             projectiles.splice(i, 1);
             i--;
         }
@@ -265,30 +296,59 @@ class Tower {
         this.width = cellSize - cellGap * 2;
         this.height = cellSize - cellGap * 2;
         this.shooting = false;
-        this.image = new Image();
-        this.image.src = 'src/Images/Tower_01.png';
+        this.shootNow = false;
+        this.image = towerImages;
+        this.image.src = towerImages.src;
+        this.towerType = choosenTower;
+        this.frame = {'x':0, 'y':this.towerType-1};
+        this.frameRange = {'min':0, 'max':0};
+        this.fps = 9;
+        this.sprite = {'w':256, 'h':256};
         this.health = 100;
-        this.timer = 0;
+        this.resetTime = 0;
+
+        if (this.towerType === 1){
+            this.frameRange = {'min':1, 'max':4};
+            this.fps = 14;
+        } else if (this.towerType === 2){
+            this.frameRange = {'min':1, 'max':4};
+            this.fps = 10;
+        }
     }
 
     // Tower update function
     update(){
-        if(this.shooting){
-            this.timer++;
-            if (this.timer % 100 === 0){
-                projectiles.push(new Projectile(this.x+this.width-10, this.y+28));
-            }
-        } else {
-            this.timer = 0;
+        if (frame % this.fps === 0){
+            if (this.frame.x < this.frameRange.max) this.frame.x++;
+            else this.frame.x = this.frameRange.min;
+            if (this.frame.x === 1) this.shootNow = true;
         }
+        if (this.shooting){
+            this.frameRange.min = 0;
+            this.frameRange.max = 4;
+        } else {
+            this.frameRange.min = 0;
+            this.frameRange.max = 0;
+        }
+
+        if (this.shooting && this.shootNow){
+            if (this.towerType === 1){
+                projectiles.push(new Projectile(this.x+this.width-13, this.y+25, this.towerType));
+            } 
+
+            if (this.towerType === 2){
+                projectiles.push(new Projectile(this.x+this.width-12, this.y+25, this.towerType));
+                projectiles.push(new Projectile(this.x+this.width-13, this.y+45, this.towerType));
+            } 
+            this.shootNow = false;
+        } 
     }
 
     // Tower draw function
     draw(){
-        // ctx.fillStyle = 'blue';
+        ctx.fillStyle = 'black';
         // ctx.fillRect(this.x, this.y, this.width, this.height);
-        ctx.drawImage(this.image, this.x, this.y, cellSize, cellSize);
-        // ctx.drawImage(this.x, this.y, cellSize, cellSize);
+        ctx.drawImage(this.image, this.frame.x*this.sprite.w, this.frame.y*this.sprite.h, this.sprite.w, this.sprite.h, this.x, this.y, this.width, this.height);
 
         ctx.textAlign = 'center';
         ctx.fillStyle = 'Gold';
@@ -335,25 +395,26 @@ class Enemy {
         this.movement = this.speed;
         this.health = 100;
         this.maxHealth = this.health;
-        this.image = new Image();
-        this.image.src = 'src/Images/Enemy_01.png';
+        this.image = enemyImages;
+        this.image.src = enemyImages.src;
+        this.enemyType = Math.floor(Math.random() * enemyTypes);
+        this.frame = {'x':0, 'y':this.enemyType};
+        this.frameRange = {'min':0, 'max':3};
+        this.sprite = {'w':256, 'h':256};
     }
 
     // Enemy update function
     update(){
         this.x -= this.movement;
+        if (frame % 10 === 0){
+            if (this.frame.x < this.frameRange.max) this.frame.x++;
+            else (this.frame.x = this.frameRange.min);
+        }
     }
 
     // Enemy draw function
     draw(){
-        // ctx.fillStyle = 'red';
-        // ctx.fillRect(this.x, this.y, this.width, this.height);
-        ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
-
-        // ctx.textAlign = 'center';
-        // ctx.fillStyle = 'Gold';
-        // ctx.font = `30px ${customFont}`;
-        // ctx.fillText(Math.floor(this.health), this.x+this.width/2, this.y+30);
+        ctx.drawImage(this.image, this.frame.x*this.sprite.w, this.frame.y*this.sprite.h, this.sprite.w, this.sprite.h, this.x, this.y, this.width, this.height);
     }
 }
 
@@ -432,6 +493,64 @@ function handleResource(){
 }
 
 
+const card1 = {
+    x: 15,
+    y: 15,
+    width: 75,
+    height: 85,
+    color: 'Teal',
+}
+
+const card2 = {
+    x: 105,
+    y: 15,
+    width: 75,
+    height: 85,
+    color: 'Black',
+}
+
+// UI Tower Selector
+function chooseTower(){
+    if (collision(mouse, card1) && mouse.clicked){
+        choosenTower = 1;
+    } else if (collision(mouse, card2) && mouse.clicked){
+        choosenTower = 2;
+    }
+
+    if (choosenTower === 1){
+        card1.color = 'Teal';
+    } else {
+        card1.color = 'Black';
+    }
+
+    if (choosenTower === 2){
+        card2.color = 'Teal';
+    } else {
+        card2.color = 'Black';
+    }
+
+    ctx.lineWidth = 3;
+    ctx.globalAlpha = 0.2;
+    ctx.fillStyle = 'Grey';
+
+    // Card1
+    ctx.fillRect(card1.x,card1.y,card1.width,card1.height);
+    ctx.fillRect(card2.x,card2.y,card2.width,card2.height);
+
+    ctx.globalAlpha = 1;
+
+    ctx.drawImage(towerImages, 0, 0, 256, 256, card1.x, card1.y, card1.width, card1.height);
+    ctx.drawImage(towerImages, 0, 256, 256, 256, card2.x, card2.y, card2.width, card2.height);
+
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = card1.color;
+    ctx.strokeRect(card1.x,card1.y,card1.width,card1.height);
+
+    ctx.strokeStyle = card2.color;
+    ctx.strokeRect(card2.x,card2.y,card2.width,card2.height);
+}
+
+
 // Floating Messages
 class FloatingMessage {
     constructor(text, color, align, x, y, size, fade){
@@ -456,10 +575,6 @@ class FloatingMessage {
     // Floating Messages draw funtion
     draw(){
         ctx.globalAlpha = this.opacity;
-        // ctx.fillStyle = this.color;
-        // ctx.font = `25px ${customFont}`;
-        // ctx.fillText(this.text, this.x, this.y);
-
         ctx.textAlign = this.align;
         ctx.fillStyle = this.color;
         ctx.font = `${this.size}px ${customFont}`;
@@ -488,14 +603,14 @@ function handleGameStatus(){
 
     // Tower Power
     ctx.fillStyle = 'gold';
-    ctx.textAlign = 'left';
+    ctx.textAlign = 'right';
     ctx.font = `30px ${customFont}`;
-    ctx.fillText(`${tPower}`, 20, 55);
+    ctx.fillText(`Energy_${tPower}`, canvas.width-20, 50);
 
     // Score
     ctx.textAlign = 'right';
     ctx.font = `30px ${customFont}`;
-    ctx.fillText(`${score}`, canvas.width-20, 55);
+    ctx.fillText(`Score_${score}`, canvas.width-20, 90);
 
     if (gameState !== "GameOver" && score >= winningScore && enemies.length <= 0){
         gameState = "WonLevel";
@@ -525,6 +640,7 @@ function update(){
     handleEnemies();
     handleProjectiles();
     handleResource();
+    chooseTower();
     handleGameStatus();
     handleFloatingMessages();
     frame++;
