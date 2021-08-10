@@ -47,7 +47,6 @@ towerImage.src = 'src/Images/Towers.png';
 const towerTypes = 2;
 
 let choosenTower = 1;
-let towerCost = 50;
 
 const card1 = {
     x: 15,
@@ -99,7 +98,7 @@ const enemyPositions = [];
 const projectiles = [];
 const resources = [];
 const floatingMessages = [];
-const winningScore = 3000;
+const winningScore = 300;
 
 const controlBar = {
     width: canvas.width,
@@ -181,6 +180,7 @@ canvas.addEventListener('mousedown', function(e){
 
     const gridPositionX = mouse.x - (mouse.x % cellSize);
     const gridPositionY = mouse.y - (mouse.y % cellSize);
+    const gPos = {'x':gridPositionX, 'y':gridPositionY};
     if (gridPositionY < cellSize) return;
     for (let i = 0; i < towers.length; i++){
         if (towers[i].x === gridPositionX && towers[i].y === gridPositionY){
@@ -190,13 +190,12 @@ canvas.addEventListener('mousedown', function(e){
         if (towers[i].x === gridPositionX && towers[i].y === gridPositionY)
         return;
     }
-    if (canClick && tPower >= towerCost){
+    if (canClick && mouse.y >= 100 && tPower >= aTower.cost){
         towers.push(new Tower(gridPositionX, gridPositionY));
-        tPower -= towerCost;
-        chooseTower();
+        tPower -= aTower.cost;
     } else {
-        if (tPower <= towerCost){
-            floatingMessages.push(new FloatingMessage(`Needs Energy ${towerCost - tPower}`, "Red", 'center', mouse.x, gridPositionY+30, 25, 0.02));
+        if (tPower <= aTower.cost){
+            floatingMessages.push(new FloatingMessage(`Needs Energy ${aTower.cost - tPower}`, "Red", 'center', mouse.x, gridPositionY+30, 25, 0.02));
         }
     }
 });
@@ -611,7 +610,6 @@ function chooseTower(){
     if (choosenTower === 1){
         card1.color = 'Teal';
         card2.color = 'Black';
-        towerCost = card1.cost;
         aTower.type = card1.type;
         aTower.cost = card1.cost;
         aTower.hp = card1.hp;
@@ -620,7 +618,6 @@ function chooseTower(){
     } else if (choosenTower === 2){
         card1.color = 'Black';
         card2.color = 'Teal';
-        towerCost = card2.cost;
         aTower.type = card2.type;
         aTower.hp = card2.hp;
         aTower.cost = card2.cost;
