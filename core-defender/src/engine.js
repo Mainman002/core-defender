@@ -2,6 +2,30 @@ const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext('2d');
 canvas.width = 900;
 canvas.height = 600;
+// canvas.style.top = `50%+100`;
+let canvasPosition = canvas.getBoundingClientRect();
+
+// const uiCanvas = document.getElementById("uiCanvas");
+// const uiCtx = uiCanvas.getContext('2d');
+// uiCanvas.width = canvas.width;
+// uiCanvas.height = 100;
+// uiCanvas.style.top = `50%`;
+// uiCanvas.style.top = `${canvasPosition.top}px`;
+// uiCanvas.style.left = `${canvasPosition.left}px`;
+// let uiCanvasPosition = uiCanvas.getBoundingClientRect();
+// uiCanvas.style.paddingLeft = `0px`;
+// uiCanvas.style.paddingTop = `0px`;
+
+const notifyCanvas = document.getElementById("notifyCanvas");
+const notifyCtx = notifyCanvas.getContext('2d');
+notifyCanvas.width = canvas.width;
+notifyCanvas.height = canvas.height;
+notifyCanvas.style.top = `${canvasPosition.top}px`;
+notifyCanvas.style.left = `${canvasPosition.left}px`;
+
+// left:50%;
+// top:50%;
+// transform: translate(-50%, -50%);
 
 let gameState = "MainMenu";
 const customFont = 'Orbitron'; // Verdana
@@ -9,15 +33,55 @@ const customFont = 'Orbitron'; // Verdana
 // Game Image Assets
 
 // Enemies
-const enemyImages = new Image();
+const enemyImage = new Image();
+enemyImage.src = 'src/Images/Enemies.png';
 const enemyTypes = 4;
-enemyImages.src = 'src/Images/Enemies.png';
+
+// Floor Tiles
+const floorImage = new Image();
+floorImage.src = "src/Images/Floor_Tiles.png";
 
 // Towers
-const towerImages = new Image();
+const towerImage = new Image();
+towerImage.src = 'src/Images/Towers.png';
 const towerTypes = 2;
-towerImages.src = 'src/Images/Towers.png';
+
 let choosenTower = 1;
+let towerCost = 50;
+
+const card1 = {
+    x: 15,
+    y: 15,
+    width: 75,
+    height: 85,
+    color: 'Teal',
+    type: 1,
+    cost: 25,
+    hp: 200,
+    dmg: 5,
+    speed: 10,
+}
+
+const card2 = {
+    x: 105,
+    y: 15,
+    width: 75,
+    height: 85,
+    color: 'Black',
+    type: 2,
+    cost: 50,
+    hp: 400,
+    dmg: 10,
+    speed: 14,
+}
+
+const aTower = {
+    type: 1,
+    cost: 0,
+    hp: 0,
+    dmg: 0,
+    speed: 0,
+}
 
 // Game Variables
 let enemySpawnRate = 600;
@@ -35,7 +99,7 @@ const enemyPositions = [];
 const projectiles = [];
 const resources = [];
 const floatingMessages = [];
-const winningScore = 300;
+const winningScore = 3000;
 
 const controlBar = {
     width: canvas.width,
@@ -52,13 +116,27 @@ const mouse = {
 }
 let clickTimer = 1;
 let canClick = false;
-let canvasPosition = canvas.getBoundingClientRect();
+// let canvasPosition = canvas.getBoundingClientRect();
 
 
 window.addEventListener('resize', function(){
     // canvas.width = window.innerWidth;
     // canvas.height = window.innerHeight;
     canvasPosition = canvas.getBoundingClientRect();
+    // uiCanvas.style.top = `${canvasPosition.top}px`;
+    // uiCanvas.style.left = `${canvasPosition.left}px`;
+    // uiCanvasPosition = uiCanvas.getBoundingClientRect();
+
+    notifyCanvas.style.top = `${canvasPosition.top}px`;
+    notifyCanvas.style.left = `${canvasPosition.left}px`;
+    notifyCanvas.width = canvas.width;
+    notifyCanvas.height = canvas.height;
+
+    if (gameState === "Playing"){
+        chooseTower();
+    }
+    
+
     // ctx.scale(9,6);
     // ctx.setTransform(1, 0, 0, 1, 0, 0);
 });
@@ -68,6 +146,14 @@ window.addEventListener('resize', function(){
 canvas.addEventListener('mousemove', function(e){
     mouse.x = e.x - canvasPosition.left;
     mouse.y = e.y - canvasPosition.top;
+
+    if (mouse.y <= canvas.style.top+100){
+        mouse.y = undefined;
+        if (gameState === "Playing"){
+            chooseTower();
+        }
+    }
+    // console.log(`x: ${mouse.uiX}  y: ${mouse.uiY}`);
 });
 
 
@@ -75,12 +161,18 @@ canvas.addEventListener('mousemove', function(e){
 canvas.addEventListener('mouseleave', function(e){
     mouse.y = undefined;
     mouse.x = undefined;
+    if (gameState === "Playing"){
+        chooseTower();
+    }
 });
 
 
 // Mouse Down Event
 canvas.addEventListener('mousedown', function(e){
     mouse.clicked = true;
+    if (gameState === "Playing"){
+        chooseTower();
+    }
 
     if (gameState === "MainMenu" || gameState === "GameOver" || gameState === "WonLevel"){
         gameState = "Playing";
@@ -98,10 +190,10 @@ canvas.addEventListener('mousedown', function(e){
         if (towers[i].x === gridPositionX && towers[i].y === gridPositionY)
         return;
     }
-    let towerCost = 50;
     if (canClick && tPower >= towerCost){
         towers.push(new Tower(gridPositionX, gridPositionY));
         tPower -= towerCost;
+        chooseTower();
     } else {
         if (tPower <= towerCost){
             floatingMessages.push(new FloatingMessage(`Needs Energy ${towerCost - tPower}`, "Red", 'center', mouse.x, gridPositionY+30, 25, 0.02));
@@ -125,6 +217,7 @@ function init(){
 // Reset Variables
 function reset(){
     ctx.clearRect(0,0,canvas.width,canvas.height);
+    // uiCtx.clearRect(0, 0, uiCanvas.width, uiCanvas.height);
     canClick = false;
     clickTimer = 1;
     resources.length = 0;
@@ -138,6 +231,8 @@ function reset(){
     frame = 1;
     tPower = startTPower;
     score = 0;
+    choosenTower = 1;
+    chooseTower();
     gameState = "Playing";
     // mainMenu();
     update();
@@ -148,6 +243,7 @@ function reset(){
 function mainMenu(){
     floatingMessages.length = 0;
     ctx.clearRect(0,0,canvas.width,canvas.height);
+    notifyCtx.clearRect(0,0,notifyCanvas.width,notifyCanvas.height);
     ctx.textAlign = 'center';
     ctx.fillStyle = 'Gold';
     ctx.font = `70px ${customFont}`;
@@ -161,6 +257,7 @@ function mainMenu(){
 function gameOver(){
     floatingMessages.length = 0;
     ctx.clearRect(0,0,canvas.width,canvas.height);
+    notifyCtx.clearRect(0,0,notifyCanvas.width,notifyCanvas.height);
     ctx.textAlign = 'center';
     ctx.fillStyle = 'Gold';
     ctx.font = `70px ${customFont}`;
@@ -175,6 +272,7 @@ function gameOver(){
 function wonLevel(){
     floatingMessages.length = 0;
     ctx.clearRect(0,0,canvas.width,canvas.height);
+    notifyCtx.clearRect(0,0,notifyCanvas.width,notifyCanvas.height);
     ctx.textAlign = 'center';
     ctx.fillStyle = 'Gold';
     ctx.font = `70px ${customFont}`;
@@ -193,8 +291,8 @@ class Cell {
         this.width = cellSize;
         this.height = cellSize;
         this.sprite = {'w':256, 'h':256};
-        this.image = new Image();
-        this.image.src = "src/Images/Floor_Tiles.png";
+        this.image = floorImage;
+        this.image.src = floorImage.src;
         this.maxFrame = 6;
         this.frame = Math.floor(Math.random() * this.maxFrame);
     }
@@ -205,8 +303,11 @@ class Cell {
         ctx.drawImage(this.image, this.frame*this.sprite.w, 0, this.sprite.w, this.sprite.h, this.x, this.y, this.width, this.height);
 
         if (mouse.x && mouse.y && collision(this,mouse)){
-            ctx.strokeStyle = 'Gold';
-            ctx.strokeRect(this.x, this.y, this.width, this.height);
+            chooseTower();
+            notifyCtx.globalAlpha = 1;
+            notifyCtx.strokeStyle = 'Gold';
+            notifyCtx.lineWidth = 3;
+            notifyCtx.strokeRect(this.x, this.y, this.width, this.height);
         }
     }
 }
@@ -232,14 +333,14 @@ function handleGameGrid(){
 
 // Projectile class
 class Projectile {
-    constructor(x, y, type){
+    constructor(x, y){
         this.x = x;
         this.y = y;
         this.width = 18;
         this.height = 8;
         this.dmg = 20;
         this.speed = 5;
-        this.towerType = type;
+        this.towerType = aTower.type;
 
         if (this.towerType === 1){
             this.dmg = 10;
@@ -297,23 +398,23 @@ class Tower {
         this.height = cellSize - cellGap * 2;
         this.shooting = false;
         this.shootNow = false;
-        this.image = towerImages;
-        this.image.src = towerImages.src;
-        this.towerType = choosenTower;
+        this.image = towerImage;
+        this.image.src = towerImage.src;
+        this.towerType = aTower.type;
         this.frame = {'x':0, 'y':this.towerType-1};
         this.frameRange = {'min':0, 'max':0};
-        this.fps = 9;
+        this.fps = aTower.speed;
         this.sprite = {'w':256, 'h':256};
-        this.health = 100;
+        this.health = aTower.hp;
         this.resetTime = 0;
 
-        if (this.towerType === 1){
-            this.frameRange = {'min':1, 'max':4};
-            this.fps = 14;
-        } else if (this.towerType === 2){
-            this.frameRange = {'min':1, 'max':4};
-            this.fps = 10;
-        }
+        // if (this.towerType === 1){
+        //     this.frameRange = {'min':1, 'max':4};
+            // this.fps = 14;
+        // } else if (this.towerType === 2){
+        //     this.frameRange = {'min':1, 'max':4};
+            // this.fps = 10;
+        // }
     }
 
     // Tower update function
@@ -395,8 +496,8 @@ class Enemy {
         this.movement = this.speed;
         this.health = 100;
         this.maxHealth = this.health;
-        this.image = enemyImages;
-        this.image.src = enemyImages.src;
+        this.image = enemyImage;
+        this.image.src = enemyImage.src;
         this.enemyType = Math.floor(Math.random() * enemyTypes);
         this.frame = {'x':0, 'y':this.enemyType};
         this.frameRange = {'min':0, 'max':3};
@@ -436,6 +537,7 @@ function handleEnemies(){
             floatingMessages.push(new FloatingMessage(`+${gainedPower}`, "SkyBlue", 'center', enemies[i].x+enemies[i].width/2, enemies[i].y+30, 20, 0.02));
             tPower += gainedPower;
             score += gainedPower;
+            chooseTower();
             const findThisIndex = enemyPositions.indexOf(enemies[i].y);
             enemyPositions.splice(findThisIndex, 1);
             enemies.splice(i, 1);
@@ -493,61 +595,79 @@ function handleResource(){
 }
 
 
-const card1 = {
-    x: 15,
-    y: 15,
-    width: 75,
-    height: 85,
-    color: 'Teal',
-}
-
-const card2 = {
-    x: 105,
-    y: 15,
-    width: 75,
-    height: 85,
-    color: 'Black',
-}
-
 // UI Tower Selector
 function chooseTower(){
-    if (collision(mouse, card1) && mouse.clicked){
-        choosenTower = 1;
-    } else if (collision(mouse, card2) && mouse.clicked){
-        choosenTower = 2;
-    }
+    notifyCtx.clearRect(0, 0, notifyCanvas.width, notifyCanvas.height);
+
+    notifyCtx.fillStyle = `rgb(27, 35, 39)`;
+    notifyCtx.fillRect(0,0,controlBar.width,controlBar.height);
+
+    // if (collision(mouse, card1) && mouse.clicked){
+    //     choosenTower = 1;
+    // } else if (collision(mouse, card2) && mouse.clicked){
+    //     choosenTower = 2;
+    // }
 
     if (choosenTower === 1){
         card1.color = 'Teal';
-    } else {
-        card1.color = 'Black';
-    }
-
-    if (choosenTower === 2){
-        card2.color = 'Teal';
-    } else {
         card2.color = 'Black';
+        towerCost = card1.cost;
+        aTower.type = card1.type;
+        aTower.cost = card1.cost;
+        aTower.hp = card1.hp;
+        aTower.dmg = card1.dmg;
+        aTower.speed = card1.speed;
+    } else if (choosenTower === 2){
+        card1.color = 'Black';
+        card2.color = 'Teal';
+        towerCost = card2.cost;
+        aTower.type = card2.type;
+        aTower.hp = card2.hp;
+        aTower.cost = card2.cost;
+        aTower.dmg = card2.dmg;
+        aTower.speed = card2.speed;
     }
 
-    ctx.lineWidth = 3;
-    ctx.globalAlpha = 0.2;
-    ctx.fillStyle = 'Grey';
+    notifyCtx.lineWidth = 3;
+    notifyCtx.globalAlpha = 0.2;
+    notifyCtx.fillStyle = 'Grey';
 
     // Card1
-    ctx.fillRect(card1.x,card1.y,card1.width,card1.height);
-    ctx.fillRect(card2.x,card2.y,card2.width,card2.height);
+    notifyCtx.fillRect(card1.x,card1.y,card1.width,card1.height);
+    notifyCtx.fillRect(card2.x,card2.y,card2.width,card2.height);
 
-    ctx.globalAlpha = 1;
+    notifyCtx.globalAlpha = 1;
+    notifyCtx.globalAlpha = 1;
 
-    ctx.drawImage(towerImages, 0, 0, 256, 256, card1.x, card1.y, card1.width, card1.height);
-    ctx.drawImage(towerImages, 0, 256, 256, 256, card2.x, card2.y, card2.width, card2.height);
+    notifyCtx.drawImage(towerImage, 0, 0, 256, 256, card1.x, card1.y, card1.width, card1.height);
+    notifyCtx.drawImage(towerImage, 0, 256, 256, 256, card2.x, card2.y, card2.width, card2.height);
 
-    ctx.globalAlpha = 1;
-    ctx.strokeStyle = card1.color;
-    ctx.strokeRect(card1.x,card1.y,card1.width,card1.height);
+    notifyCtx.strokeStyle = card1.color;
+    notifyCtx.strokeRect(card1.x,card1.y,card1.width,card1.height);
 
-    ctx.strokeStyle = card2.color;
-    ctx.strokeRect(card2.x,card2.y,card2.width,card2.height);
+    notifyCtx.strokeStyle = card2.color;
+    notifyCtx.strokeRect(card2.x,card2.y,card2.width,card2.height);
+
+    notifyCtx.fillStyle = 'Gold';
+    notifyCtx.textAlign = 'center';
+    notifyCtx.font = `20px ${customFont}`;
+    notifyCtx.fillText(`${card1.cost}`, card1.x + card1.width/2, card1.height+13);
+    notifyCtx.fillText(`${card2.cost}`, card2.x + card2.width/2, card2.height+13);
+
+
+    // Tower Power
+    notifyCtx.fillStyle = 'gold';
+    notifyCtx.textAlign = 'right';
+    notifyCtx.font = `30px ${customFont}`;
+    notifyCtx.fillText(`Energy_${tPower}`, canvas.width-20, 50);
+
+    // Score
+    notifyCtx.textAlign = 'right';
+    notifyCtx.font = `30px ${customFont}`;
+    notifyCtx.fillText(`Score_${score}`, canvas.width-20, 90);
+
+    notifyCtx.globalAlpha = 1;
+
 }
 
 
@@ -600,18 +720,6 @@ function handleFloatingMessages(){
 
 // UI Status
 function handleGameStatus(){
-
-    // Tower Power
-    ctx.fillStyle = 'gold';
-    ctx.textAlign = 'right';
-    ctx.font = `30px ${customFont}`;
-    ctx.fillText(`Energy_${tPower}`, canvas.width-20, 50);
-
-    // Score
-    ctx.textAlign = 'right';
-    ctx.font = `30px ${customFont}`;
-    ctx.fillText(`Score_${score}`, canvas.width-20, 90);
-
     if (gameState !== "GameOver" && score >= winningScore && enemies.length <= 0){
         gameState = "WonLevel";
     }
@@ -627,20 +735,33 @@ function handleGameStatus(){
     if (gameState === "MainMenu"){
         mainMenu();
     }
+
+    // uiCtx.fillStyle = 'black';
+    // uiCtx.fillRect(0,0,controlBar.width,controlBar.height);
 }
 
 
 // Update game loop
 function update(){
+    // uiCtx.clearRect(0,0,uiCanvas.width,uiCanvas.height);
     ctx.clearRect(0,0,canvas.width,canvas.height);
-    ctx.fillStyle = 'black';
-    ctx.fillRect(0,0,controlBar.width,controlBar.height);
+
+    if (collision(mouse, card1) && mouse.clicked){
+        choosenTower = 1;
+        chooseTower();
+    } else if (collision(mouse, card2) && mouse.clicked){
+        choosenTower = 2;
+        chooseTower();
+    }
+
+    // ctx.fillStyle = 'black';
+    // ctx.fillRect(0,0,controlBar.width,controlBar.height);
     handleGameGrid();
     handleTowers();
     handleEnemies();
     handleProjectiles();
     handleResource();
-    chooseTower();
+    // chooseTower();
     handleGameStatus();
     handleFloatingMessages();
     frame++;
