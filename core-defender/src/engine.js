@@ -216,8 +216,8 @@ canvas.addEventListener('mousedown', function(e){
             if (aTower.type > 0){
                 floatingMessages.push(new FloatingMessage("Can't Stack", "Red", 'center', mouse.x, gridPositionY+30, 25, 0.02)); 
             } else {
-                floatingMessages.push(new FloatingMessage(`+${towers[i].cost/2}`, "Red", 'center', mouse.x+32, gridPositionY+30, 25, 0.02)); 
-                floatingMessages.push(new FloatingMessage("Deleted", "Red", 'center', mouse.x, gridPositionY+30, 25, 0.02)); 
+                floatingMessages.push(new FloatingMessage(`+${Math.floor(towers[i].cost/2)}`, "Teal", 'center', mouse.x, gridPositionY+10, 25, 0.02)); 
+                floatingMessages.push(new FloatingMessage("Deleted", "Red", 'center', mouse.x, gridPositionY+40, 25, 0.02)); 
                 tPower += towers[i].cost/2;
                 towers[i].delete(i);
             } 
@@ -404,7 +404,7 @@ function handleProjectiles(){
         for (let j = 0; j < enemies.length; j++){
             if (enemies[j] && projectiles[i] && collision(enemies[j], projectiles[i])){
                 enemies[j].health -= projectiles[i].dmg;
-                floatingMessages.push(new FloatingMessage(`${Math.floor(enemies[j].health)}`, "Red", 'center', enemies[j].x, enemies[j].y+30, 20, 0.03));
+                floatingMessages.push(new FloatingMessage(`${Math.floor(enemies[j].health)}`, "Red", 'center', enemies[j].x + Math.random() * 50 + -20, enemies[j].y + 10 + Math.random() * 50 + 20, 20, 0.03));
                 projectiles.splice(i, 1);
                 i--;
             }
