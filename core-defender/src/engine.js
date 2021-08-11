@@ -41,10 +41,31 @@ const towerImage = new Image();
 towerImage.src = 'src/Images/Towers.png';
 const towerTypes = 2;
 
+// Cards
+const cardImage = new Image();
+cardImage.src = 'src/Images/Buttons.png';
+
 let choosenTower = 1;
 
-const card1 = {
+const cardOffset = 90;
+
+const card0 = {
     x: 15,
+    y: 15,
+    width: 75,
+    height: 85,
+    color: 'Black',
+    type: 0,
+    cost: 0,
+    hp: 0,
+    dmg: 0,
+    speed: 0,
+    animSpeed: 0,
+}
+
+
+const card1 = {
+    x: card0.x+cardOffset,
     y: 15,
     width: 75,
     height: 85,
@@ -62,7 +83,7 @@ if (cheats.speedShoot) card1.animSpeed = 2;
 if (cheats.powerShoot) card1.dmg = 9001;
 
 const card2 = {
-    x: 105,
+    x: card1.x+cardOffset,
     y: 15,
     width: 75,
     height: 85,
@@ -192,18 +213,25 @@ canvas.addEventListener('mousedown', function(e){
     if (gridPositionY < cellSize) return;
     for (let i = 0; i < towers.length; i++){
         if (towers[i].x === gridPositionX && towers[i].y === gridPositionY){
-            floatingMessages.push(new FloatingMessage("Can't Stack", "Red", 'center', mouse.x, gridPositionY+30, 25, 0.02)); 
+            if (aTower.type > 0){
+                floatingMessages.push(new FloatingMessage("Can't Stack", "Red", 'center', mouse.x, gridPositionY+30, 25, 0.02)); 
+            } else {
+                floatingMessages.push(new FloatingMessage(`+${towers[i].cost/2}`, "Red", 'center', mouse.x+32, gridPositionY+30, 25, 0.02)); 
+                floatingMessages.push(new FloatingMessage("Deleted", "Red", 'center', mouse.x, gridPositionY+30, 25, 0.02)); 
+                tPower += towers[i].cost/2;
+                towers[i].delete(i);
+            } 
         }
 
         if (towers[i].x === gridPositionX && towers[i].y === gridPositionY)
         return;
     }
-    if (canClick && mouse.y >= 100 && tPower >= aTower.cost){
+    if (canClick && aTower.type > 0 && mouse.y >= 100 && tPower >= aTower.cost){
         towers.push(new Tower(gridPositionX, gridPositionY));
         if (!cheats.infinitePower) tPower -= aTower.cost;
         if (cheats.insaneMode) enemySpeedOffset += 0.01;
     } else {
-        if (tPower <= aTower.cost){
+        if (aTower.type > 0 && tPower <= aTower.cost){
             floatingMessages.push(new FloatingMessage(`Needs Energy ${Math.floor(aTower.cost - tPower)}`, "Red", 'center', mouse.x, gridPositionY+30, 25, 0.02));
         }
     }
@@ -407,6 +435,7 @@ class Tower {
         this.frameRange = {'min':0, 'max':0};
         this.fps = aTower.animSpeed;
         this.sprite = {'w':256, 'h':256};
+        this.cost = aTower.cost;
         this.health = aTower.hp;
         this.dmg = aTower.dmg;
         this.speed = aTower.speed;
@@ -419,6 +448,12 @@ class Tower {
         //     this.frameRange = {'min':1, 'max':4};
             // this.fps = 10;
         // }
+    }
+
+    // Remove tower
+    delete(i){
+        towers.splice(i, 1);
+        i--;
     }
 
     // Tower update function
@@ -620,7 +655,18 @@ function chooseTower(){
     //     choosenTower = 2;
     // }
 
-    if (choosenTower === 1){
+    if (choosenTower === 0){
+        card0.color = 'Teal';
+        card1.color = 'Black';
+        card2.color = 'Black';
+        aTower.type = card0.type;
+        aTower.cost = card0.cost;
+        aTower.hp = card0.hp;
+        aTower.dmg = card0.dmg;
+        aTower.speed = card0.speed;
+        aTower.animSpeed = card0.animSpeed;
+    } else if (choosenTower === 1){
+        card0.color = 'Black';
         card1.color = 'Teal';
         card2.color = 'Black';
         aTower.type = card1.type;
@@ -630,6 +676,7 @@ function chooseTower(){
         aTower.speed = card1.speed;
         aTower.animSpeed = card1.animSpeed;
     } else if (choosenTower === 2){
+        card0.color = 'Black';
         card1.color = 'Black';
         card2.color = 'Teal';
         aTower.type = card2.type;
@@ -644,15 +691,20 @@ function chooseTower(){
     notifyCtx.globalAlpha = 0.2;
     notifyCtx.fillStyle = 'Grey';
 
-    // Card1
+    // Draw Cards
+    notifyCtx.fillRect(card0.x,card0.y,card0.width,card0.height);
     notifyCtx.fillRect(card1.x,card1.y,card1.width,card1.height);
     notifyCtx.fillRect(card2.x,card2.y,card2.width,card2.height);
 
     notifyCtx.globalAlpha = 1;
     notifyCtx.globalAlpha = 1;
 
+    notifyCtx.drawImage(cardImage, 0, 0, 150, 200, card0.x, card0.y, card0.width, card0.height);
     notifyCtx.drawImage(towerImage, 0, 0, 256, 256, card1.x, card1.y, card1.width, card1.height);
     notifyCtx.drawImage(towerImage, 0, 256, 256, 256, card2.x, card2.y, card2.width, card2.height);
+
+    notifyCtx.strokeStyle = card0.color;
+    notifyCtx.strokeRect(card0.x,card0.y,card0.width,card0.height);
 
     notifyCtx.strokeStyle = card1.color;
     notifyCtx.strokeRect(card1.x,card1.y,card1.width,card1.height);
@@ -758,7 +810,10 @@ function update(){
     // uiCtx.clearRect(0,0,uiCanvas.width,uiCanvas.height);
     ctx.clearRect(0,0,canvas.width,canvas.height);
 
-    if (collision(mouse, card1) && mouse.clicked){
+    if (collision(mouse, card0) && mouse.clicked){
+        choosenTower = 0;
+        chooseTower();
+    } else if (collision(mouse, card1) && mouse.clicked){
         choosenTower = 1;
         chooseTower();
     } else if (collision(mouse, card2) && mouse.clicked){
