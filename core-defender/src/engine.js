@@ -110,7 +110,11 @@ const aTower = {
 }
 
 // Game Variables
-let enemySpawnRate = 600;
+let countdown = 3;
+let firstSpawn = true;
+let spawnEnemies = false;
+const resetSpawnTimer = 600;
+let enemySpawnRate = resetSpawnTimer;
 let enemySpeedOffset = 1;
 let enemyHPOffset = 1;
 let frame = 0;
@@ -263,7 +267,9 @@ function reset(){
     projectiles.length = 0;
     floatingMessages.length = 0;
     gameGrid.length = 0;
-    enemySpawnRate = 600;
+    enemySpawnRate = resetSpawnTimer;
+    spawnEnemies = false;
+    firstSpawn = true;
     frame = 1;
     tPower = startTPower;
     score = 0;
@@ -591,10 +597,15 @@ function handleEnemies(){
             i--;
         }
     }
-    if (frame % enemySpawnRate === 0 && score < winningScore){
+
+    if (spawnEnemies && frame % enemySpawnRate === 0 && score < winningScore){
         let verticalPos = Math.floor(Math.random() * 5 + 1) * cellSize;
         enemies.push(new Enemy(verticalPos));
         enemyPositions.push(verticalPos);
+        if (firstSpawn){
+            enemySpawnRate = resetSpawnTimer;
+            firstSpawn = false;
+        }
         if (enemySpawnRate > 120) enemySpawnRate -= 50;
     }
 }
@@ -805,6 +816,24 @@ function handleGameStatus(){
 }
 
 
+// Game Start Countdown
+function startCountdown(){
+    if (!spawnEnemies && frame % 40 === 0) {
+        if (countdown > 0){
+            floatingMessages.push(new FloatingMessage(`ALERT ${countdown}`, "Red", 'center', canvas.width/2, canvas.height/2, 50, 0.02));
+            countdown--;
+            // console.log(countdown);
+        } else {
+            floatingMessages.push(new FloatingMessage(`Defend The Core!`, "Red", 'center', canvas.width/2, canvas.height/2, 60, 0.02));
+            enemySpawnRate = 40;
+            spawnEnemies = true;
+            countdown = 3;
+            // console.log(spawnEnemies);
+        }
+    }
+}
+
+
 // Update game loop
 function update(){
     // uiCtx.clearRect(0,0,uiCanvas.width,uiCanvas.height);
@@ -831,6 +860,7 @@ function update(){
     // chooseTower();
     handleGameStatus();
     handleFloatingMessages();
+    startCountdown();
     frame++;
     if (!canClick){
         clickTimer++;
