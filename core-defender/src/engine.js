@@ -216,7 +216,7 @@ canvas.addEventListener('mousedown', function(e){
     const gPos = {'x':gridPositionX, 'y':gridPositionY};
     if (gridPositionY < cellSize) return;
     for (let i = 0; i < towers.length; i++){
-        if (towers[i].x === gridPositionX && towers[i].y === gridPositionY){
+        if (towers[i] && towers[i].x === gridPositionX && towers[i].y === gridPositionY){
             if (aTower.type > 0){
                 floatingMessages.push(new FloatingMessage("Can't Stack", "Red", 'center', mouse.x, gridPositionY+30, 25, 0.02)); 
             } else {
@@ -227,7 +227,7 @@ canvas.addEventListener('mousedown', function(e){
             } 
         }
 
-        if (towers[i].x === gridPositionX && towers[i].y === gridPositionY)
+        if (towers[i] && towers[i].x === gridPositionX && towers[i].y === gridPositionY)
         return;
     }
     if (canClick && aTower.type > 0 && mouse.y >= 100 && tPower >= aTower.cost){
