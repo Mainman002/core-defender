@@ -5,17 +5,6 @@ canvas.height = 600;
 // canvas.style.top = `50%+100`;
 let canvasPosition = canvas.getBoundingClientRect();
 
-// const uiCanvas = document.getElementById("uiCanvas");
-// const uiCtx = uiCanvas.getContext('2d');
-// uiCanvas.width = canvas.width;
-// uiCanvas.height = 100;
-// uiCanvas.style.top = `50%`;
-// uiCanvas.style.top = `${canvasPosition.top}px`;
-// uiCanvas.style.left = `${canvasPosition.left}px`;
-// let uiCanvasPosition = uiCanvas.getBoundingClientRect();
-// uiCanvas.style.paddingLeft = `0px`;
-// uiCanvas.style.paddingTop = `0px`;
-
 const notifyCanvas = document.getElementById("notifyCanvas");
 const notifyCtx = notifyCanvas.getContext('2d');
 notifyCanvas.width = canvas.width;
@@ -23,9 +12,15 @@ notifyCanvas.height = canvas.height;
 notifyCanvas.style.top = `${canvasPosition.top}px`;
 notifyCanvas.style.left = `${canvasPosition.left}px`;
 
-// left:50%;
-// top:50%;
-// transform: translate(-50%, -50%);
+// Cheats
+const cheats = {
+    godMode: false,
+    insaneMode: false,
+    infinitePower: false,
+    highHP: false,
+    speedShoot: false,
+    powerShoot: false,
+}
 
 let gameState = "MainMenu";
 const customFont = 'Orbitron'; // Verdana
@@ -56,10 +51,15 @@ const card1 = {
     color: 'Teal',
     type: 1,
     cost: 25,
-    hp: 200,
-    dmg: 5,
-    speed: 10,
+    hp: 300,
+    dmg: 10,
+    speed: 7,
+    animSpeed: 12,
 }
+
+if (cheats.highHP) card1.hp = 9000;
+if (cheats.speedShoot) card1.animSpeed = 2;
+if (cheats.powerShoot) card1.dmg = 9001;
 
 const card2 = {
     x: 105,
@@ -69,21 +69,29 @@ const card2 = {
     color: 'Black',
     type: 2,
     cost: 50,
-    hp: 400,
+    hp: 500,
     dmg: 10,
-    speed: 14,
+    speed: 7,
+    animSpeed: 12,
 }
 
+if (cheats.highHP) card2.hp = 9000;
+if (cheats.speedShoot) card2.animSpeed = 2;
+if (cheats.powerShoot) card2.dmg = 9001;
+
 const aTower = {
-    type: 1,
-    cost: 0,
-    hp: 0,
-    dmg: 0,
-    speed: 0,
+    type: card1.type,
+    cost: card1.cost,
+    hp: card1.hp,
+    dmg: card1.dmg,
+    speed: card1.speed,
+    animSpeed: card1.aimSpeed,
 }
 
 // Game Variables
 let enemySpawnRate = 600;
+let enemySpeedOffset = 1;
+let enemyHPOffset = 1;
 let frame = 0;
 const startTPower = 100;
 let tPower = startTPower;
@@ -98,7 +106,7 @@ const enemyPositions = [];
 const projectiles = [];
 const resources = [];
 const floatingMessages = [];
-const winningScore = 300;
+const winningScore = 3000;
 
 const controlBar = {
     width: canvas.width,
@@ -192,10 +200,11 @@ canvas.addEventListener('mousedown', function(e){
     }
     if (canClick && mouse.y >= 100 && tPower >= aTower.cost){
         towers.push(new Tower(gridPositionX, gridPositionY));
-        tPower -= aTower.cost;
+        if (!cheats.infinitePower) tPower -= aTower.cost;
+        if (cheats.insaneMode) enemySpeedOffset += 0.01;
     } else {
         if (tPower <= aTower.cost){
-            floatingMessages.push(new FloatingMessage(`Needs Energy ${aTower.cost - tPower}`, "Red", 'center', mouse.x, gridPositionY+30, 25, 0.02));
+            floatingMessages.push(new FloatingMessage(`Needs Energy ${Math.floor(aTower.cost - tPower)}`, "Red", 'center', mouse.x, gridPositionY+30, 25, 0.02));
         }
     }
 });
@@ -233,6 +242,8 @@ function reset(){
     choosenTower = 1;
     chooseTower();
     gameState = "Playing";
+    enemySpeedOffset = 1;
+    enemyHPOffset = 1;
     // mainMenu();
     update();
     createGrid();
@@ -332,22 +343,14 @@ function handleGameGrid(){
 
 // Projectile class
 class Projectile {
-    constructor(x, y){
+    constructor(x, y, type, dmg, speed){
         this.x = x;
         this.y = y;
         this.width = 18;
         this.height = 8;
-        this.dmg = 20;
-        this.speed = 5;
-        this.towerType = aTower.type;
-
-        if (this.towerType === 1){
-            this.dmg = 10;
-            this.speed = 5;
-        } else if (this.towerType === 2){
-            this.dmg = 10;
-            this.speed = 5;
-        }
+        this.type = type;
+        this.dmg = dmg;
+        this.speed = speed;
     }
 
     // Projectile update function
@@ -373,7 +376,7 @@ function handleProjectiles(){
         for (let j = 0; j < enemies.length; j++){
             if (enemies[j] && projectiles[i] && collision(enemies[j], projectiles[i])){
                 enemies[j].health -= projectiles[i].dmg;
-                floatingMessages.push(new FloatingMessage(`${enemies[j].health}`, "Red", 'center', enemies[j].x, enemies[j].y+30, 20, 0.03));
+                floatingMessages.push(new FloatingMessage(`${Math.floor(enemies[j].health)}`, "Red", 'center', enemies[j].x, enemies[j].y+30, 20, 0.03));
                 projectiles.splice(i, 1);
                 i--;
             }
@@ -402,9 +405,11 @@ class Tower {
         this.towerType = aTower.type;
         this.frame = {'x':0, 'y':this.towerType-1};
         this.frameRange = {'min':0, 'max':0};
-        this.fps = aTower.speed;
+        this.fps = aTower.animSpeed;
         this.sprite = {'w':256, 'h':256};
         this.health = aTower.hp;
+        this.dmg = aTower.dmg;
+        this.speed = aTower.speed;
         this.resetTime = 0;
 
         // if (this.towerType === 1){
@@ -433,12 +438,12 @@ class Tower {
 
         if (this.shooting && this.shootNow){
             if (this.towerType === 1){
-                projectiles.push(new Projectile(this.x+this.width-13, this.y+25, this.towerType));
+                projectiles.push(new Projectile(this.x+this.width-13, this.y+25, this.towerType, this.dmg, this.speed));
             } 
 
             if (this.towerType === 2){
-                projectiles.push(new Projectile(this.x+this.width-12, this.y+25, this.towerType));
-                projectiles.push(new Projectile(this.x+this.width-13, this.y+45, this.towerType));
+                projectiles.push(new Projectile(this.x+this.width-12, this.y+25, this.towerType, this.dmg, this.speed));
+                projectiles.push(new Projectile(this.x+this.width-13, this.y+45, this.towerType, this.dmg, this.speed));
             } 
             this.shootNow = false;
         } 
@@ -492,8 +497,15 @@ class Enemy {
         this.width = cellSize - cellGap * 2;
         this.height = cellSize - cellGap * 2;
         this.speed = Math.random() * 0.2 + 0.4;
-        this.movement = this.speed;
-        this.health = 100;
+
+        if (cheats.insaneMode){
+            this.movement = this.speed * enemySpeedOffset;
+            this.health = 100 * enemyHPOffset;
+        } else {
+            this.movement = this.speed;
+            this.health = 100;
+        }
+        
         this.maxHealth = this.health;
         this.image = enemyImage;
         this.image.src = enemyImage.src;
@@ -525,7 +537,7 @@ function handleEnemies(){
         enemies[i].update();
         enemies[i].draw();
         if (enemies[i].x < 0){
-            gameState = "GameOver";
+            if (!cheats.godMode) gameState = "GameOver";
             enemies.length = 0;
             towers.length = 0;
             enemyPositions.length = 0;
@@ -533,9 +545,10 @@ function handleEnemies(){
         }
         if (enemies[i] && enemies[i].health <= 0){
             let gainedPower = enemies[i].maxHealth/10;
-            floatingMessages.push(new FloatingMessage(`+${gainedPower}`, "SkyBlue", 'center', enemies[i].x+enemies[i].width/2, enemies[i].y+30, 20, 0.02));
+            floatingMessages.push(new FloatingMessage(`+${Math.floor(gainedPower)}`, "SkyBlue", 'center', enemies[i].x+enemies[i].width/2, enemies[i].y+30, 20, 0.02));
             tPower += gainedPower;
             score += gainedPower;
+            if (cheats.insaneMode) enemyHPOffset += 0.3;
             chooseTower();
             const findThisIndex = enemyPositions.indexOf(enemies[i].y);
             enemyPositions.splice(findThisIndex, 1);
@@ -584,7 +597,7 @@ function handleResource(){
     for (let i = 0; i < resources.length; i++){
         resources[i].draw();
         if (resources[i] && mouse.x && mouse.y && collision(resources[i], mouse)){
-            floatingMessages.push(new FloatingMessage(`+${resources[i].amount}`, "SkyBlue", 'center', mouse.x, resources[i].y, 25, 0.02));
+            floatingMessages.push(new FloatingMessage(`+${Math.floor(resources[i].amount)}`, "SkyBlue", 'center', mouse.x, resources[i].y, 25, 0.02));
             tPower += resources[i].amount;
             score += resources[i].amount;
             resources.splice(i, 1);
@@ -615,6 +628,7 @@ function chooseTower(){
         aTower.hp = card1.hp;
         aTower.dmg = card1.dmg;
         aTower.speed = card1.speed;
+        aTower.animSpeed = card1.animSpeed;
     } else if (choosenTower === 2){
         card1.color = 'Black';
         card2.color = 'Teal';
@@ -623,6 +637,7 @@ function chooseTower(){
         aTower.cost = card2.cost;
         aTower.dmg = card2.dmg;
         aTower.speed = card2.speed;
+        aTower.animSpeed = card2.animSpeed;
     }
 
     notifyCtx.lineWidth = 3;
@@ -656,12 +671,12 @@ function chooseTower(){
     notifyCtx.fillStyle = 'gold';
     notifyCtx.textAlign = 'right';
     notifyCtx.font = `30px ${customFont}`;
-    notifyCtx.fillText(`Energy_${tPower}`, canvas.width-20, 50);
+    notifyCtx.fillText(`${Math.floor(tPower)} :Energy`, canvas.width-20, 50);
 
     // Score
     notifyCtx.textAlign = 'right';
     notifyCtx.font = `30px ${customFont}`;
-    notifyCtx.fillText(`Score_${score}`, canvas.width-20, 90);
+    notifyCtx.fillText(`${Math.floor(score)}   :Score`, canvas.width-20, 90);
 
     notifyCtx.globalAlpha = 1;
 
