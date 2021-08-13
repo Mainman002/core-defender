@@ -220,9 +220,9 @@ canvas.addEventListener('mousedown', function(e){
             if (aTower.type > 0){
                 floatingMessages.push(new FloatingMessage("Can't Stack", "Red", 'center', mouse.x, gridPositionY+30, 25, 0.02)); 
             } else {
-                floatingMessages.push(new FloatingMessage(`+${Math.floor(towers[i].cost/2)}`, "Teal", 'center', mouse.x, gridPositionY+10, 25, 0.02)); 
+                floatingMessages.push(new FloatingMessage(`+${Math.floor(towers[i].cost*.5)}`, "Teal", 'center', mouse.x, gridPositionY+10, 25, 0.02)); 
                 floatingMessages.push(new FloatingMessage("Deleted", "Red", 'center', mouse.x, gridPositionY+40, 25, 0.02)); 
-                tPower += towers[i].cost/2;
+                tPower += towers[i].cost*.5;
                 towers[i].delete(i);
             } 
         }
@@ -291,10 +291,10 @@ function mainMenu(){
     ctx.textAlign = 'center';
     ctx.fillStyle = 'Gold';
     ctx.font = `70px ${customFont}`;
-    ctx.fillText("Main Menu", canvas.width/2, canvas.height/2-40);
+    ctx.fillText("Main Menu", canvas.width*.5, canvas.height*.5-40);
 
     ctx.font = `30px ${customFont}`;
-    ctx.fillText("Click Mouse To Play", canvas.width/2, canvas.height/2+40);
+    ctx.fillText("Click Mouse To Play", canvas.width*.5, canvas.height*.5+40);
 }
 
 // Show Game Over
@@ -305,10 +305,10 @@ function gameOver(){
     ctx.textAlign = 'center';
     ctx.fillStyle = 'Gold';
     ctx.font = `70px ${customFont}`;
-    ctx.fillText("Game Over", canvas.width/2, canvas.height/2-40);
+    ctx.fillText("Game Over", canvas.width*.5, canvas.height*.5-40);
 
     ctx.font = `30px ${customFont}`;
-    ctx.fillText("Click Mouse To Try Again", canvas.width/2, canvas.height/2+40);
+    ctx.fillText("Click Mouse To Try Again", canvas.width*.5, canvas.height*.5+40);
 }
 
 
@@ -320,10 +320,10 @@ function wonLevel(){
     ctx.textAlign = 'center';
     ctx.fillStyle = 'Gold';
     ctx.font = `70px ${customFont}`;
-    ctx.fillText("You Survived", canvas.width/2, canvas.height/2-40);
+    ctx.fillText("You Survived", canvas.width*.5, canvas.height*.5-40);
 
     ctx.font = `30px ${customFont}`;
-    ctx.fillText("Click Mouse To Play Again", canvas.width/2, canvas.height/2+40);
+    ctx.fillText("Click Mouse To Play Again", canvas.width*.5, canvas.height*.5+40);
 }
 
 
@@ -385,16 +385,20 @@ class Projectile {
         this.type = type;
         this.dmg = dmg;
         this.speed = speed;
+        this.color = [255,1,0];
     }
 
     // Projectile update function
     update(){
         this.x += this.speed;
+        if (this.color[0] > 0) this.color[0] -= 2;
+        if (this.color[1] > 0) this.color[1] -= 2;
+        if (this.color[2] > 0) this.color[2] -= 2;
     }
 
     // Projectile draw function
     draw(){
-        ctx.fillStyle = 'red';
+        ctx.fillStyle = `rgb(${this.color[0]}, ${this.color[1]}, ${this.color[2]})`;
         ctx.fillRect(this.x, this.y, this.width, this.height);
     }
 }
@@ -417,7 +421,7 @@ function handleProjectiles(){
         }
 
 
-        if (projectiles[i] && projectiles[i].x > canvas.width - cellSize/2){
+        if (projectiles[i] && projectiles[i].x > canvas.width - cellSize*.5){
             projectiles.splice(i, 1);
             i--;
         }
@@ -499,7 +503,7 @@ class Tower {
         ctx.textAlign = 'center';
         ctx.fillStyle = 'Gold';
         ctx.font = `25px ${customFont}`;
-        ctx.fillText(Math.floor(this.health), this.x+this.width/2, this.y+this.height);
+        ctx.fillText(Math.floor(this.health), this.x+this.width*.5, this.y+this.height);
     }
 }
 
@@ -586,7 +590,7 @@ function handleEnemies(){
         }
         if (enemies[i] && enemies[i].health <= 0){
             let gainedPower = enemies[i].maxHealth/10;
-            floatingMessages.push(new FloatingMessage(`+${Math.floor(gainedPower)}`, "SkyBlue", 'center', enemies[i].x+enemies[i].width/2, enemies[i].y+30, 20, 0.02));
+            floatingMessages.push(new FloatingMessage(`+${Math.floor(gainedPower)}`, "SkyBlue", 'center', enemies[i].x+enemies[i].width*.5, enemies[i].y+30, 20, 0.02));
             tPower += gainedPower;
             score += gainedPower;
             if (cheats.insaneMode) enemyHPOffset += 0.3;
@@ -630,7 +634,7 @@ class Resource {
         ctx.fillStyle = 'gold';
         ctx.textAlign = 'center';
         ctx.font = `20px ${customFont}`;
-        ctx.fillText(this.amount, this.x+this.width/2, this.y+20);
+        ctx.fillText(this.amount, this.x+this.width*.5, this.y+20);
     }
 }
 
@@ -726,8 +730,8 @@ function chooseTower(){
     notifyCtx.fillStyle = 'Gold';
     notifyCtx.textAlign = 'center';
     notifyCtx.font = `20px ${customFont}`;
-    notifyCtx.fillText(`${card1.cost}`, card1.x + card1.width/2, card1.height+13);
-    notifyCtx.fillText(`${card2.cost}`, card2.x + card2.width/2, card2.height+13);
+    notifyCtx.fillText(`${card1.cost}`, card1.x + card1.width*.5, card1.height+13);
+    notifyCtx.fillText(`${card2.cost}`, card2.x + card2.width*.5, card2.height+13);
 
 
     // Tower Power
@@ -820,11 +824,11 @@ function handleGameStatus(){
 function startCountdown(){
     if (!spawnEnemies && frame % 40 === 0) {
         if (countdown > 0){
-            floatingMessages.push(new FloatingMessage(`ALERT ${countdown}`, "Red", 'center', canvas.width/2, canvas.height/2, 50, 0.02));
+            floatingMessages.push(new FloatingMessage(`ALERT ${countdown}`, "Red", 'center', canvas.width*.5, canvas.height*.5, 50, 0.02));
             countdown--;
             // console.log(countdown);
         } else {
-            floatingMessages.push(new FloatingMessage(`Defend The Core!`, "Red", 'center', canvas.width/2, canvas.height/2, 60, 0.02));
+            floatingMessages.push(new FloatingMessage(`Defend The Core!`, "Red", 'center', canvas.width*.5, canvas.height*.5, 60, 0.02));
             enemySpawnRate = 40;
             spawnEnemies = true;
             countdown = 3;
@@ -874,6 +878,14 @@ function update(){
     }
 }
 
+
+// Color Fade
+// function fade_color(r,g,b, speedR, speedG, speedB){
+//     if (r > 0) r -= speedR;
+//     if (g > 0) g -= speedG;
+//     if (b > 0) b -= speedB;
+//     return r, g, b;
+// }
 
 // Grid collision
 function collision(first,second){
