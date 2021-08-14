@@ -71,11 +71,11 @@ const card1 = {
     height: 85,
     color: 'Teal',
     type: 1,
-    cost: 25,
-    hp: 300,
-    dmg: 10,
-    speed: 7,
-    animSpeed: 12,
+    cost: 50,
+    hp: 100,
+    dmg: 0,
+    speed: 1,
+    animSpeed: 450,
 }
 
 if (cheats.highHP) card1.hp = 9000;
@@ -90,7 +90,7 @@ const card2 = {
     color: 'Black',
     type: 2,
     cost: 50,
-    hp: 500,
+    hp: 300,
     dmg: 10,
     speed: 7,
     animSpeed: 12,
@@ -99,6 +99,24 @@ const card2 = {
 if (cheats.highHP) card2.hp = 9000;
 if (cheats.speedShoot) card2.animSpeed = 2;
 if (cheats.powerShoot) card2.dmg = 9001;
+
+const card3 = {
+    x: card2.x+cardOffset,
+    y: 15,
+    width: 75,
+    height: 85,
+    color: 'Black',
+    type: 3,
+    cost: 100,
+    hp: 500,
+    dmg: 10,
+    speed: 7,
+    animSpeed: 12,
+}
+
+if (cheats.highHP) card3.hp = 9000;
+if (cheats.speedShoot) card3.animSpeed = 2;
+if (cheats.powerShoot) card3.dmg = 9001;
 
 const aTower = {
     type: card1.type,
@@ -130,6 +148,7 @@ const enemies = [];
 const enemyPositions = [];
 const projectiles = [];
 const resources = [];
+const tResources = [];
 const floatingMessages = [];
 const winningScore = 3000;
 
@@ -220,9 +239,9 @@ canvas.addEventListener('mousedown', function(e){
             if (aTower.type > 0){
                 floatingMessages.push(new FloatingMessage("Can't Stack", "Red", 'center', mouse.x, gridPositionY+30, 25, 0.02)); 
             } else {
-                floatingMessages.push(new FloatingMessage(`+${Math.floor(towers[i].cost*.5)}`, "Teal", 'center', mouse.x, gridPositionY+10, 25, 0.02)); 
+                floatingMessages.push(new FloatingMessage(`+${Math.floor(towers[i].cost/2)}`, "Teal", 'center', mouse.x, gridPositionY+10, 25, 0.02)); 
                 floatingMessages.push(new FloatingMessage("Deleted", "Red", 'center', mouse.x, gridPositionY+40, 25, 0.02)); 
-                tPower += towers[i].cost*.5;
+                tPower += towers[i].cost/2;
                 towers[i].delete(i);
             } 
         }
@@ -291,10 +310,10 @@ function mainMenu(){
     ctx.textAlign = 'center';
     ctx.fillStyle = 'Gold';
     ctx.font = `70px ${customFont}`;
-    ctx.fillText("Main Menu", canvas.width*.5, canvas.height*.5-40);
+    ctx.fillText("Main Menu", canvas.width/2, canvas.height/2-40);
 
     ctx.font = `30px ${customFont}`;
-    ctx.fillText("Click Mouse To Play", canvas.width*.5, canvas.height*.5+40);
+    ctx.fillText("Click Mouse To Play", canvas.width/2, canvas.height/2+40);
 }
 
 // Show Game Over
@@ -305,10 +324,10 @@ function gameOver(){
     ctx.textAlign = 'center';
     ctx.fillStyle = 'Gold';
     ctx.font = `70px ${customFont}`;
-    ctx.fillText("Game Over", canvas.width*.5, canvas.height*.5-40);
+    ctx.fillText("Game Over", canvas.width/2, canvas.height/2-40);
 
     ctx.font = `30px ${customFont}`;
-    ctx.fillText("Click Mouse To Try Again", canvas.width*.5, canvas.height*.5+40);
+    ctx.fillText("Click Mouse To Try Again", canvas.width/2, canvas.height/2+40);
 }
 
 
@@ -320,10 +339,10 @@ function wonLevel(){
     ctx.textAlign = 'center';
     ctx.fillStyle = 'Gold';
     ctx.font = `70px ${customFont}`;
-    ctx.fillText("You Survived", canvas.width*.5, canvas.height*.5-40);
+    ctx.fillText("You Survived", canvas.width/2, canvas.height/2-40);
 
     ctx.font = `30px ${customFont}`;
-    ctx.fillText("Click Mouse To Play Again", canvas.width*.5, canvas.height*.5+40);
+    ctx.fillText("Click Mouse To Play Again", canvas.width/2, canvas.height/2+40);
 }
 
 
@@ -385,20 +404,16 @@ class Projectile {
         this.type = type;
         this.dmg = dmg;
         this.speed = speed;
-        this.color = [255,1,0];
     }
 
     // Projectile update function
     update(){
         this.x += this.speed;
-        if (this.color[0] > 0) this.color[0] -= 2;
-        if (this.color[1] > 0) this.color[1] -= 2;
-        if (this.color[2] > 0) this.color[2] -= 2;
     }
 
     // Projectile draw function
     draw(){
-        ctx.fillStyle = `rgb(${this.color[0]}, ${this.color[1]}, ${this.color[2]})`;
+        ctx.fillStyle = 'red';
         ctx.fillRect(this.x, this.y, this.width, this.height);
     }
 }
@@ -421,7 +436,7 @@ function handleProjectiles(){
         }
 
 
-        if (projectiles[i] && projectiles[i].x > canvas.width - cellSize*.5){
+        if (projectiles[i] && projectiles[i].x > canvas.width - cellSize/2){
             projectiles.splice(i, 1);
             i--;
         }
@@ -483,10 +498,15 @@ class Tower {
 
         if (this.shooting && this.shootNow){
             if (this.towerType === 1){
-                projectiles.push(new Projectile(this.x+this.width-13, this.y+25, this.towerType, this.dmg, this.speed));
+                tResources.push(new towerResource(this.x + Math.random() * 50 + 20, this.y + Math.random() * 50 + 20, 45));
+                // projectiles.push(new Projectile(this.x+this.width-13, this.y+25, this.towerType, this.dmg, this.speed));
             } 
 
             if (this.towerType === 2){
+                projectiles.push(new Projectile(this.x+this.width-13, this.y+25, this.towerType, this.dmg, this.speed));
+            } 
+
+            if (this.towerType === 3){
                 projectiles.push(new Projectile(this.x+this.width-12, this.y+25, this.towerType, this.dmg, this.speed));
                 projectiles.push(new Projectile(this.x+this.width-13, this.y+45, this.towerType, this.dmg, this.speed));
             } 
@@ -503,7 +523,7 @@ class Tower {
         ctx.textAlign = 'center';
         ctx.fillStyle = 'Gold';
         ctx.font = `25px ${customFont}`;
-        ctx.fillText(Math.floor(this.health), this.x+this.width*.5, this.y+this.height);
+        ctx.fillText(Math.floor(this.health), this.x+this.width/2, this.y+this.height);
     }
 }
 
@@ -513,16 +533,21 @@ function handleTowers(){
     for (let i = 0; i < towers.length; i++){
         towers[i].update();
         towers[i].draw();
-        if (enemyPositions.indexOf(towers[i].y) !== -1){
-            towers[i].shooting = true;
+
+        if (towers[i].type > 1){
+            if (enemyPositions.indexOf(towers[i].y) !== -1){
+                towers[i].shooting = true;
+            } else {
+                towers[i].shooting = false;
+            }
         } else {
-            towers[i].shooting = false;
+            towers[i].shooting = true;
         }
 
         for (let j = 0; j < enemies.length; j ++){
             if (towers[i] && enemies[j] && collision(towers[i], enemies[j])){
-               enemies[j].movement = 0; 
-               towers[i].health -= 1; 
+            enemies[j].movement = 0; 
+            towers[i].health -= 1; 
             }
             if (towers[i] && towers[i].health <= 0){
                 enemies[j].movement = enemies[j].speed;
@@ -590,7 +615,7 @@ function handleEnemies(){
         }
         if (enemies[i] && enemies[i].health <= 0){
             let gainedPower = enemies[i].maxHealth/10;
-            floatingMessages.push(new FloatingMessage(`+${Math.floor(gainedPower)}`, "SkyBlue", 'center', enemies[i].x+enemies[i].width*.5, enemies[i].y+30, 20, 0.02));
+            floatingMessages.push(new FloatingMessage(`+${Math.floor(gainedPower)}`, "SkyBlue", 'center', enemies[i].x+enemies[i].width/2, enemies[i].y+30, 20, 0.02));
             tPower += gainedPower;
             score += gainedPower;
             if (cheats.insaneMode) enemyHPOffset += 0.3;
@@ -634,7 +659,7 @@ class Resource {
         ctx.fillStyle = 'gold';
         ctx.textAlign = 'center';
         ctx.font = `20px ${customFont}`;
-        ctx.fillText(this.amount, this.x+this.width*.5, this.y+20);
+        ctx.fillText(this.amount, this.x+this.width/2, this.y+20);
     }
 }
 
@@ -651,6 +676,44 @@ function handleResource(){
             tPower += resources[i].amount;
             score += resources[i].amount;
             resources.splice(i, 1);
+            i--;
+        }
+    }
+}
+
+
+// tower spawner power spawner
+class towerResource {
+    constructor(x, y, amount){
+        this.x = x;
+        this.y = y;
+        this.width = cellSize * 0.6;
+        this.height = cellSize * 0.6;
+        this.amount = amount;
+    }
+
+    // Resource draw function
+    draw(){
+        ctx.fillStyle = 'blue';
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+
+        ctx.fillStyle = 'gold';
+        ctx.textAlign = 'center';
+        ctx.font = `20px ${customFont}`;
+        ctx.fillText(this.amount, this.x+this.width/2, this.y+20);
+    }
+}
+
+
+// Tower resource handler
+function handleTowerResource(){
+    for (let i = 0; i < tResources.length; i++){
+        tResources[i].draw();
+        if (tResources[i] && mouse.x && mouse.y && collision(tResources[i], mouse)){
+            floatingMessages.push(new FloatingMessage(`+${Math.floor(tResources[i].amount)}`, "SkyBlue", 'center', mouse.x, tResources[i].y, 25, 0.02));
+            tPower += tResources[i].amount;
+            score += 5;
+            tResources.splice(i, 1);
             i--;
         }
     }
@@ -674,6 +737,7 @@ function chooseTower(){
         card0.color = 'Teal';
         card1.color = 'Black';
         card2.color = 'Black';
+        card3.color = 'Black';
         aTower.type = card0.type;
         aTower.cost = card0.cost;
         aTower.hp = card0.hp;
@@ -684,6 +748,7 @@ function chooseTower(){
         card0.color = 'Black';
         card1.color = 'Teal';
         card2.color = 'Black';
+        card3.color = 'Black';
         aTower.type = card1.type;
         aTower.cost = card1.cost;
         aTower.hp = card1.hp;
@@ -694,12 +759,24 @@ function chooseTower(){
         card0.color = 'Black';
         card1.color = 'Black';
         card2.color = 'Teal';
+        card3.color = 'Black';
         aTower.type = card2.type;
         aTower.hp = card2.hp;
         aTower.cost = card2.cost;
         aTower.dmg = card2.dmg;
         aTower.speed = card2.speed;
         aTower.animSpeed = card2.animSpeed;
+    }else if (choosenTower === 3){
+        card0.color = 'Black';
+        card1.color = 'Black';
+        card2.color = 'Black';
+        card3.color = 'Teal';
+        aTower.type = card3.type;
+        aTower.hp = card3.hp;
+        aTower.cost = card3.cost;
+        aTower.dmg = card3.dmg;
+        aTower.speed = card3.speed;
+        aTower.animSpeed = card3.animSpeed;
     }
 
     notifyCtx.lineWidth = 3;
@@ -710,6 +787,7 @@ function chooseTower(){
     notifyCtx.fillRect(card0.x,card0.y,card0.width,card0.height);
     notifyCtx.fillRect(card1.x,card1.y,card1.width,card1.height);
     notifyCtx.fillRect(card2.x,card2.y,card2.width,card2.height);
+    notifyCtx.fillRect(card3.x,card3.y,card3.width,card3.height);
 
     notifyCtx.globalAlpha = 1;
     notifyCtx.globalAlpha = 1;
@@ -717,6 +795,7 @@ function chooseTower(){
     notifyCtx.drawImage(cardImage, 0, 0, 150, 200, card0.x, card0.y, card0.width, card0.height);
     notifyCtx.drawImage(towerImage, 0, 0, 256, 256, card1.x, card1.y, card1.width, card1.height);
     notifyCtx.drawImage(towerImage, 0, 256, 256, 256, card2.x, card2.y, card2.width, card2.height);
+    notifyCtx.drawImage(towerImage, 0, 512, 256, 256, card3.x, card3.y, card3.width, card3.height);
 
     notifyCtx.strokeStyle = card0.color;
     notifyCtx.strokeRect(card0.x,card0.y,card0.width,card0.height);
@@ -727,11 +806,15 @@ function chooseTower(){
     notifyCtx.strokeStyle = card2.color;
     notifyCtx.strokeRect(card2.x,card2.y,card2.width,card2.height);
 
+    notifyCtx.strokeStyle = card3.color;
+    notifyCtx.strokeRect(card3.x,card3.y,card3.width,card3.height);
+
     notifyCtx.fillStyle = 'Gold';
     notifyCtx.textAlign = 'center';
     notifyCtx.font = `20px ${customFont}`;
-    notifyCtx.fillText(`${card1.cost}`, card1.x + card1.width*.5, card1.height+13);
-    notifyCtx.fillText(`${card2.cost}`, card2.x + card2.width*.5, card2.height+13);
+    notifyCtx.fillText(`${card1.cost}`, card1.x + card1.width/2, card1.height+13);
+    notifyCtx.fillText(`${card2.cost}`, card2.x + card2.width/2, card2.height+13);
+    notifyCtx.fillText(`${card3.cost}`, card3.x + card3.width/2, card3.height+13);
 
 
     // Tower Power
@@ -824,11 +907,11 @@ function handleGameStatus(){
 function startCountdown(){
     if (!spawnEnemies && frame % 40 === 0) {
         if (countdown > 0){
-            floatingMessages.push(new FloatingMessage(`ALERT ${countdown}`, "Red", 'center', canvas.width*.5, canvas.height*.5, 50, 0.02));
+            floatingMessages.push(new FloatingMessage(`ALERT ${countdown}`, "Red", 'center', canvas.width/2, canvas.height/2, 50, 0.02));
             countdown--;
             // console.log(countdown);
         } else {
-            floatingMessages.push(new FloatingMessage(`Defend The Core!`, "Red", 'center', canvas.width*.5, canvas.height*.5, 60, 0.02));
+            floatingMessages.push(new FloatingMessage(`Defend The Core!`, "Red", 'center', canvas.width/2, canvas.height/2, 60, 0.02));
             enemySpawnRate = 40;
             spawnEnemies = true;
             countdown = 3;
@@ -852,6 +935,9 @@ function update(){
     } else if (collision(mouse, card2) && mouse.clicked){
         choosenTower = 2;
         chooseTower();
+    }else if (collision(mouse, card3) && mouse.clicked){
+        choosenTower = 3;
+        chooseTower();
     }
 
     // ctx.fillStyle = 'black';
@@ -861,6 +947,7 @@ function update(){
     handleEnemies();
     handleProjectiles();
     handleResource();
+    handleTowerResource();
     // chooseTower();
     handleGameStatus();
     handleFloatingMessages();
@@ -878,14 +965,6 @@ function update(){
     }
 }
 
-
-// Color Fade
-// function fade_color(r,g,b, speedR, speedG, speedB){
-//     if (r > 0) r -= speedR;
-//     if (g > 0) g -= speedG;
-//     if (b > 0) b -= speedB;
-//     return r, g, b;
-// }
 
 // Grid collision
 function collision(first,second){
