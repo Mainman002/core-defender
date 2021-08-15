@@ -20,10 +20,15 @@ const cheats = {
     highHP: false,
     speedShoot: false,
     powerShoot: false,
+    fpsVisible:false,
 }
 
 let gameState = "MainMenu";
 const customFont = 'Orbitron'; // Verdana
+
+// Global Variables
+globalThis.times = [];
+globalThis.fps = 0;
 
 // Game Image Assets
 
@@ -999,10 +1004,38 @@ function update(){
     handleGameStatus();
     handleFloatingMessages();
     startCountdown();
+
+    // Show fps if cheats fpsVisible is true
+    if (cheats.fpsVisible){
+        // FPS Background
+        ctx.globalAlpha = 0.9;
+        ctx.fillStyle = 'Black';
+        ctx.fillRect(25, canvas.height-80, 120, 70);
+
+        // FPS Draw Text
+        ctx.globalAlpha = 1;
+        ctx.textAlign = 'left';
+        ctx.fillStyle = 'Gold';
+        ctx.font = `25px ${customFont}`;
+        ctx.fillText(`FPS:${fps}`, 32,canvas.height-35);
+
+        ctx.globalAlpha = 1;
+    }
+
     frame++;
     if (!canClick){
         clickTimer++;
     }
+
+     // FPS Calculation Debug
+     window.requestAnimationFrame(() => {
+        const now = performance.now();
+        while (globalThis.times.length > 0 && globalThis.times[0] <= now - 1000) {
+            globalThis.times.shift();
+        }
+        globalThis.times.push(now);
+        globalThis.fps = globalThis.times.length;
+    });
     
     if (gameState === "Playing"){
         if (clickTimer % 100 === 0){
