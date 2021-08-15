@@ -39,13 +39,13 @@ floorImage.src = "src/Images/Floor_Tiles.png";
 // Towers
 const towerImage = new Image();
 towerImage.src = 'src/Images/Towers.png';
-const towerTypes = 2;
+// const towerTypes = 3;
 
 // Cards
 const cardImage = new Image();
 cardImage.src = 'src/Images/Buttons.png';
 
-let choosenTower = 1;
+let choosenTower = 2;
 
 const cardOffset = 90;
 
@@ -74,8 +74,8 @@ const card1 = {
     cost: 50,
     hp: 100,
     dmg: 0,
-    speed: 4,
-    animSpeed: 450,
+    speed: 1,
+    animSpeed: 350,
 }
 
 if (cheats.highHP) card1.hp = 9000;
@@ -175,12 +175,12 @@ const card6 = {
 // }
 
 const aTower = {
-    type: card1.type,
-    cost: card1.cost,
-    hp: card1.hp,
-    dmg: card1.dmg,
-    speed: card1.speed,
-    animSpeed: card1.aimSpeed,
+    type: card2.type,
+    cost: card2.cost,
+    hp: card2.hp,
+    dmg: card2.dmg,
+    speed: card2.speed,
+    animSpeed: card2.aimSpeed,
 }
 
 // Game Variables
@@ -359,7 +359,7 @@ function reset(){
     frame = 1;
     tPower = startTPower;
     score = 0;
-    choosenTower = 1;
+    choosenTower = 2;
     chooseTower();
     gameState = "Playing";
     enemySpeedOffset = 1;
@@ -562,8 +562,11 @@ class Tower {
 
         if (this.shooting && this.shootNow){
             if (this.towerType === 1){
-                tResources.push(new towerResource(this.x + Math.random() * 50 + 20, this.y + Math.random() * 50 + 20, 45));
-                // projectiles.push(new Projectile(this.x+this.width-13, this.y+25, this.towerType, this.dmg, this.speed));
+                if (!cheats.insaneMode) {
+                tResources.push(new towerResource(this.x + Math.random() * 50 + 20, this.y + Math.random() * 50 + 20, 25));
+                } else {
+                    tResources.push(new towerResource(this.x + Math.random() * 50 + 20, this.y + Math.random() * 50 + 20, 100));
+                }
             } 
 
             if (this.towerType === 2){
@@ -586,7 +589,7 @@ class Tower {
 
         ctx.textAlign = 'center';
         ctx.fillStyle = 'Gold';
-        ctx.font = `25px ${customFont}`;
+        ctx.font = `23px ${customFont}`;
         ctx.fillText(Math.floor(this.health), this.x+this.width/2, this.y+this.height);
     }
 }
@@ -633,21 +636,43 @@ class Enemy {
         this.height = cellSize - cellGap * 2;
         this.speed = Math.random() * 0.2 + 0.4;
 
-        if (cheats.insaneMode){
-            this.movement = this.speed * enemySpeedOffset;
-            this.health = 100 * enemyHPOffset;
-        } else {
-            this.movement = this.speed;
-            this.health = 100;
-        }
-        
-        this.maxHealth = this.health;
         this.image = enemyImage;
         this.image.src = enemyImage.src;
         this.enemyType = Math.floor(Math.random() * enemyTypes);
         this.frame = {'x':0, 'y':this.enemyType};
         this.frameRange = {'min':0, 'max':3};
         this.sprite = {'w':256, 'h':256};
+
+        if (this.enemyType == 0){
+            this.health = 50;
+        }
+
+        if (this.enemyType == 1){
+            this.health = 100;
+        }
+
+        if (this.enemyType == 2){
+            this.health = 150;
+        }
+
+        if (this.enemyType == 3){
+            this.health = 200;
+        }
+
+        if (this.enemyType == 4){
+            this.health = 250;
+        }
+        
+
+        if (cheats.insaneMode){
+            this.movement = this.speed * enemySpeedOffset;
+            this.health = this.health * enemyHPOffset;
+        } else {
+            this.movement = this.speed;
+            this.health = this.health;
+        }
+        
+        this.maxHealth = this.health;
     }
 
     // Enemy update function
@@ -681,9 +706,15 @@ function handleEnemies(){
         if (enemies[i] && enemies[i].health <= 0){
             let gainedPower = enemies[i].maxHealth/10;
             floatingMessages.push(new FloatingMessage(`+${Math.floor(gainedPower)}`, "SkyBlue", 'center', enemies[i].x+enemies[i].width/2, enemies[i].y+30, 20, 0.02));
+
+            // Gain Resources
             tPower += gainedPower;
             score += gainedPower;
-            if (cheats.insaneMode) enemyHPOffset += 0.3;
+
+            // Increase Enemy Spawn Timer
+            if (enemySpawnRate > 120) enemySpawnRate -= 25;
+
+            if (cheats.insaneMode) enemyHPOffset += 0.15;
             chooseTower();
             const findThisIndex = enemyPositions.indexOf(enemies[i].y);
             enemyPositions.splice(findThisIndex, 1);
@@ -700,7 +731,6 @@ function handleEnemies(){
             enemySpawnRate = resetSpawnTimer;
             firstSpawn = false;
         }
-        if (enemySpawnRate > 120) enemySpawnRate -= 50;
     }
 }
 
