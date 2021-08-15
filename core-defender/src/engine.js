@@ -118,6 +118,62 @@ if (cheats.highHP) card3.hp = 9000;
 if (cheats.speedShoot) card3.animSpeed = 2;
 if (cheats.powerShoot) card3.dmg = 9001;
 
+const card4 = {
+    x: card3.x+cardOffset,
+    y: 15,
+    width: 75,
+    height: 85,
+    color: 'Black',
+    type: 3,
+    cost: 100,
+    hp: 500,
+    dmg: 10,
+    speed: 7,
+    animSpeed: 12,
+}
+
+const card5 = {
+    x: card4.x+cardOffset,
+    y: 15,
+    width: 75,
+    height: 85,
+    color: 'Black',
+    type: 3,
+    cost: 100,
+    hp: 500,
+    dmg: 10,
+    speed: 7,
+    animSpeed: 12,
+}
+
+const card6 = {
+    x: card5.x+cardOffset,
+    y: 15,
+    width: 75,
+    height: 85,
+    color: 'Black',
+    type: 3,
+    cost: 100,
+    hp: 500,
+    dmg: 10,
+    speed: 7,
+    animSpeed: 12,
+}
+
+// const card7 = {
+//     x: card6.x+cardOffset,
+//     y: 15,
+//     width: 75,
+//     height: 85,
+//     color: 'Black',
+//     type: 3,
+//     cost: 100,
+//     hp: 500,
+//     dmg: 10,
+//     speed: 7,
+//     animSpeed: 12,
+// }
+
 const aTower = {
     type: card1.type,
     cost: card1.cost,
@@ -788,6 +844,10 @@ function chooseTower(){
     notifyCtx.fillRect(card1.x,card1.y,card1.width,card1.height);
     notifyCtx.fillRect(card2.x,card2.y,card2.width,card2.height);
     notifyCtx.fillRect(card3.x,card3.y,card3.width,card3.height);
+    notifyCtx.fillRect(card4.x,card4.y,card4.width,card4.height);
+    notifyCtx.fillRect(card5.x,card5.y,card5.width,card5.height);
+    notifyCtx.fillRect(card6.x,card6.y,card6.width,card6.height);
+    // notifyCtx.fillRect(card7.x,card7.y,card7.width,card7.height);
 
     notifyCtx.globalAlpha = 1;
     notifyCtx.globalAlpha = 1;
@@ -796,6 +856,10 @@ function chooseTower(){
     notifyCtx.drawImage(towerImage, 0, 0, 256, 256, card1.x, card1.y, card1.width, card1.height);
     notifyCtx.drawImage(towerImage, 0, 256, 256, 256, card2.x, card2.y, card2.width, card2.height);
     notifyCtx.drawImage(towerImage, 0, 512, 256, 256, card3.x, card3.y, card3.width, card3.height);
+    // notifyCtx.drawImage(towerImage, 0, 512, 256, 256, card4.x, card4.y, card4.width, card4.height);
+    // notifyCtx.drawImage(towerImage, 0, 512, 256, 256, card5.x, card5.y, card5.width, card5.height);
+    // notifyCtx.drawImage(towerImage, 0, 512, 256, 256, card6.x, card6.y, card6.width, card6.height);
+    // notifyCtx.drawImage(towerImage, 0, 512, 256, 256, card7.x, card7.y, card7.width, card7.height);
 
     notifyCtx.strokeStyle = card0.color;
     notifyCtx.strokeRect(card0.x,card0.y,card0.width,card0.height);
@@ -808,6 +872,18 @@ function chooseTower(){
 
     notifyCtx.strokeStyle = card3.color;
     notifyCtx.strokeRect(card3.x,card3.y,card3.width,card3.height);
+
+    notifyCtx.strokeStyle = card4.color;
+    notifyCtx.strokeRect(card4.x,card4.y,card4.width,card4.height);
+
+    notifyCtx.strokeStyle = card5.color;
+    notifyCtx.strokeRect(card5.x,card5.y,card5.width,card5.height);
+
+    notifyCtx.strokeStyle = card6.color;
+    notifyCtx.strokeRect(card6.x,card6.y,card6.width,card6.height);
+
+    // notifyCtx.strokeStyle = card7.color;
+    // notifyCtx.strokeRect(card7.x,card7.y,card7.width,card7.height);
 
     notifyCtx.fillStyle = 'Gold';
     notifyCtx.textAlign = 'center';
