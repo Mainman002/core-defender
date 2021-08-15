@@ -74,7 +74,7 @@ const card1 = {
     cost: 50,
     hp: 100,
     dmg: 0,
-    speed: 1,
+    speed: 4,
     animSpeed: 450,
 }
 
@@ -125,7 +125,7 @@ const card4 = {
     height: 85,
     color: 'Black',
     type: 3,
-    cost: 100,
+    cost: "",
     hp: 500,
     dmg: 10,
     speed: 7,
@@ -139,7 +139,7 @@ const card5 = {
     height: 85,
     color: 'Black',
     type: 3,
-    cost: 100,
+    cost: "",
     hp: 500,
     dmg: 10,
     speed: 7,
@@ -153,7 +153,7 @@ const card6 = {
     height: 85,
     color: 'Black',
     type: 3,
-    cost: 100,
+    cost: "",
     hp: 500,
     dmg: 10,
     speed: 7,
@@ -200,6 +200,7 @@ const cellGap = 3;
 
 const gameGrid = [];
 const towers = [];
+const cards = [];
 const enemies = [];
 const enemyPositions = [];
 const projectiles = [];
@@ -207,6 +208,15 @@ const resources = [];
 const tResources = [];
 const floatingMessages = [];
 const winningScore = 3000;
+
+// Setup Cards Array
+cards.push(card0);
+cards.push(card1);
+cards.push(card2);
+cards.push(card3);
+cards.push(card4);
+cards.push(card5);
+cards.push(card6);
 
 const controlBar = {
     width: canvas.width,
@@ -336,6 +346,7 @@ function reset(){
     canClick = false;
     clickTimer = 1;
     resources.length = 0;
+    tResources.length = 0;
     towers.length = 0;
     enemies.length = 0;
     enemyPositions.length = 0;
@@ -521,14 +532,6 @@ class Tower {
         this.dmg = aTower.dmg;
         this.speed = aTower.speed;
         this.resetTime = 0;
-
-        // if (this.towerType === 1){
-        //     this.frameRange = {'min':1, 'max':4};
-            // this.fps = 14;
-        // } else if (this.towerType === 2){
-        //     this.frameRange = {'min':1, 'max':4};
-            // this.fps = 10;
-        // }
     }
 
     // Remove tower
@@ -542,7 +545,12 @@ class Tower {
         if (frame % this.fps === 0){
             if (this.frame.x < this.frameRange.max) this.frame.x++;
             else this.frame.x = this.frameRange.min;
-            if (this.frame.x === 1) this.shootNow = true;
+
+            // Tower 1 shoot
+            if (this.frame.x === 0 && this.towerType === 1) this.shootNow = true;
+
+            // Towers shoot
+            if (this.frame.x === 1 && this.towerType > 1) this.shootNow = true;
         }
         if (this.shooting){
             this.frameRange.min = 0;
@@ -590,16 +598,17 @@ function handleTowers(){
         towers[i].update();
         towers[i].draw();
 
-        if (towers[i].type > 1){
+        if (towers[i].towerType === 1){
+            towers[i].shooting = true;
+        } else{
             if (enemyPositions.indexOf(towers[i].y) !== -1){
                 towers[i].shooting = true;
             } else {
                 towers[i].shooting = false;
             }
-        } else {
-            towers[i].shooting = true;
         }
-
+        
+        
         for (let j = 0; j < enemies.length; j ++){
             if (towers[i] && enemies[j] && collision(towers[i], enemies[j])){
             enemies[j].movement = 0; 
@@ -776,6 +785,32 @@ function handleTowerResource(){
 }
 
 
+// Draw cards array
+function cardArray(card, i, x, y, offset, size, icon){
+    notifyCtx.lineWidth = 3;
+    notifyCtx.globalAlpha = 0.2;
+    notifyCtx.fillStyle = 'Grey';
+
+    // Card Background
+    notifyCtx.fillRect(x*offset,y,size.width,size.height);
+
+    notifyCtx.globalAlpha = 1;
+
+    // Card icon image
+    notifyCtx.drawImage(cardImage, icon.x, icon.y, icon.w, icon.h, x*offset, y, size.width, size.height);
+
+    // Outline
+    notifyCtx.strokeStyle = card.color;
+    notifyCtx.strokeRect(x*offset,y,size.width,size.height);
+
+    // Energy cost label
+    notifyCtx.fillStyle = 'Gold';
+    notifyCtx.textAlign = 'center';
+    notifyCtx.font = `20px ${customFont}`;
+    notifyCtx.fillText(`${cards[`${i}`].cost}`, cards[`${i}`].x + cards[`${i}`].width*.5, cards[`${i}`].height+13);
+}
+
+
 // UI Tower Selector
 function chooseTower(){
     notifyCtx.clearRect(0, 0, notifyCanvas.width, notifyCanvas.height);
@@ -783,114 +818,27 @@ function chooseTower(){
     notifyCtx.fillStyle = `rgb(27, 35, 39)`;
     notifyCtx.fillRect(0,0,controlBar.width,controlBar.height);
 
-    // if (collision(mouse, card1) && mouse.clicked){
-    //     choosenTower = 1;
-    // } else if (collision(mouse, card2) && mouse.clicked){
-    //     choosenTower = 2;
-    // }
-
-    if (choosenTower === 0){
-        card0.color = 'Teal';
-        card1.color = 'Black';
-        card2.color = 'Black';
-        card3.color = 'Black';
-        aTower.type = card0.type;
-        aTower.cost = card0.cost;
-        aTower.hp = card0.hp;
-        aTower.dmg = card0.dmg;
-        aTower.speed = card0.speed;
-        aTower.animSpeed = card0.animSpeed;
-    } else if (choosenTower === 1){
-        card0.color = 'Black';
-        card1.color = 'Teal';
-        card2.color = 'Black';
-        card3.color = 'Black';
-        aTower.type = card1.type;
-        aTower.cost = card1.cost;
-        aTower.hp = card1.hp;
-        aTower.dmg = card1.dmg;
-        aTower.speed = card1.speed;
-        aTower.animSpeed = card1.animSpeed;
-    } else if (choosenTower === 2){
-        card0.color = 'Black';
-        card1.color = 'Black';
-        card2.color = 'Teal';
-        card3.color = 'Black';
-        aTower.type = card2.type;
-        aTower.hp = card2.hp;
-        aTower.cost = card2.cost;
-        aTower.dmg = card2.dmg;
-        aTower.speed = card2.speed;
-        aTower.animSpeed = card2.animSpeed;
-    }else if (choosenTower === 3){
-        card0.color = 'Black';
-        card1.color = 'Black';
-        card2.color = 'Black';
-        card3.color = 'Teal';
-        aTower.type = card3.type;
-        aTower.hp = card3.hp;
-        aTower.cost = card3.cost;
-        aTower.dmg = card3.dmg;
-        aTower.speed = card3.speed;
-        aTower.animSpeed = card3.animSpeed;
-    }
-
     notifyCtx.lineWidth = 3;
     notifyCtx.globalAlpha = 0.2;
     notifyCtx.fillStyle = 'Grey';
 
-    // Draw Cards
-    notifyCtx.fillRect(card0.x,card0.y,card0.width,card0.height);
-    notifyCtx.fillRect(card1.x,card1.y,card1.width,card1.height);
-    notifyCtx.fillRect(card2.x,card2.y,card2.width,card2.height);
-    notifyCtx.fillRect(card3.x,card3.y,card3.width,card3.height);
-    notifyCtx.fillRect(card4.x,card4.y,card4.width,card4.height);
-    notifyCtx.fillRect(card5.x,card5.y,card5.width,card5.height);
-    notifyCtx.fillRect(card6.x,card6.y,card6.width,card6.height);
-    // notifyCtx.fillRect(card7.x,card7.y,card7.width,card7.height);
+    for (let i = 0; i < cards.length; i++){
+        if (choosenTower === i){
+            cards[`${i}`].color = 'Teal';
+            aTower.x = cards[`${i}`].x;
+            aTower.y = cards[`${i}`].y;
+            aTower.type = cards[`${i}`].type;
+            aTower.cost = cards[`${i}`].cost;
+            aTower.hp = cards[`${i}`].hp;
+            aTower.dmg = cards[`${i}`].dmg;
+            aTower.speed = cards[`${i}`].speed;
+            aTower.animSpeed = cards[`${i}`].animSpeed;
+        } else {
+            cards[`${i}`].color = 'Black';
+        }
 
-    notifyCtx.globalAlpha = 1;
-    notifyCtx.globalAlpha = 1;
-
-    notifyCtx.drawImage(cardImage, 0, 0, 150, 200, card0.x, card0.y, card0.width, card0.height);
-    notifyCtx.drawImage(towerImage, 0, 0, 256, 256, card1.x, card1.y, card1.width, card1.height);
-    notifyCtx.drawImage(towerImage, 0, 256, 256, 256, card2.x, card2.y, card2.width, card2.height);
-    notifyCtx.drawImage(towerImage, 0, 512, 256, 256, card3.x, card3.y, card3.width, card3.height);
-    // notifyCtx.drawImage(towerImage, 0, 512, 256, 256, card4.x, card4.y, card4.width, card4.height);
-    // notifyCtx.drawImage(towerImage, 0, 512, 256, 256, card5.x, card5.y, card5.width, card5.height);
-    // notifyCtx.drawImage(towerImage, 0, 512, 256, 256, card6.x, card6.y, card6.width, card6.height);
-    // notifyCtx.drawImage(towerImage, 0, 512, 256, 256, card7.x, card7.y, card7.width, card7.height);
-
-    notifyCtx.strokeStyle = card0.color;
-    notifyCtx.strokeRect(card0.x,card0.y,card0.width,card0.height);
-
-    notifyCtx.strokeStyle = card1.color;
-    notifyCtx.strokeRect(card1.x,card1.y,card1.width,card1.height);
-
-    notifyCtx.strokeStyle = card2.color;
-    notifyCtx.strokeRect(card2.x,card2.y,card2.width,card2.height);
-
-    notifyCtx.strokeStyle = card3.color;
-    notifyCtx.strokeRect(card3.x,card3.y,card3.width,card3.height);
-
-    notifyCtx.strokeStyle = card4.color;
-    notifyCtx.strokeRect(card4.x,card4.y,card4.width,card4.height);
-
-    notifyCtx.strokeStyle = card5.color;
-    notifyCtx.strokeRect(card5.x,card5.y,card5.width,card5.height);
-
-    notifyCtx.strokeStyle = card6.color;
-    notifyCtx.strokeRect(card6.x,card6.y,card6.width,card6.height);
-
-    // notifyCtx.strokeStyle = card7.color;
-    // notifyCtx.strokeRect(card7.x,card7.y,card7.width,card7.height);
-
-    notifyCtx.fillStyle = 'Gold';
-    notifyCtx.textAlign = 'center';
-    notifyCtx.font = `20px ${customFont}`;
-    notifyCtx.fillText(`${card1.cost}`, card1.x + card1.width/2, card1.height+13);
-    notifyCtx.fillText(`${card2.cost}`, card2.x + card2.width/2, card2.height+13);
-    notifyCtx.fillText(`${card3.cost}`, card3.x + card3.width/2, card3.height+13);
+        cardArray(cards[`${i}`], i, 3+23*i, 10, 4, {width:75, height:85}, {x:0, y:0+200*i, w:150, h:200})
+    }
 
 
     // Tower Power
@@ -1002,18 +950,11 @@ function update(){
     // uiCtx.clearRect(0,0,uiCanvas.width,uiCanvas.height);
     ctx.clearRect(0,0,canvas.width,canvas.height);
 
-    if (collision(mouse, card0) && mouse.clicked){
-        choosenTower = 0;
-        chooseTower();
-    } else if (collision(mouse, card1) && mouse.clicked){
-        choosenTower = 1;
-        chooseTower();
-    } else if (collision(mouse, card2) && mouse.clicked){
-        choosenTower = 2;
-        chooseTower();
-    }else if (collision(mouse, card3) && mouse.clicked){
-        choosenTower = 3;
-        chooseTower();
+    for (let i = 0; i < cards.length; i++){
+        if (collision(mouse, cards[`${i}`]) && mouse.clicked){
+            choosenTower = cards[`${i}`].type;
+            chooseTower();
+        }
     }
 
     // ctx.fillStyle = 'black';
