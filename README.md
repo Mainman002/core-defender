@@ -30,7 +30,7 @@ electron-builder build
 
 ( you'll find the executable / AppImage in the "dist" folder )
 
-![image](https://user-images.githubusercontent.com/11281480/129464147-47441ebe-b459-43cb-9240-e9187501418e.png)
+![image](https://user-images.githubusercontent.com/11281480/129467895-d1a41b19-8c03-45cc-8823-b72a0827d180.png)
 
 
 
