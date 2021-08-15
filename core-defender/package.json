@@ -4,7 +4,9 @@
   "description": "Place defenders on grid to stop enemies from attack your power core!",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
   },
   "repository": "https://github.com/Mainman002/core-defender/",
   "keywords": [
