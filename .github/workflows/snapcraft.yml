@@ -1,0 +1,13 @@
+name: Snapcraft Action
+  # You may pin to the exact commit or the version.
+  # uses: samuelmeuli/action-snapcraft@10d7d0a84d9d86098b19f872257df314b0bd8e2d
+  uses: samuelmeuli/action-snapcraft@v1.2.0
+  with:
+    # The channel to install Snapcraft from
+    channel: # optional, default is stable
+    # Token for logging into Snapcraft
+    snapcraft_token: 
+    # Skip installation (login only)
+    skip_install: # optional
+    # Whether to install and configure lxd
+    use_lxd: # optional
