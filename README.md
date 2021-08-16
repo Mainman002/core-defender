@@ -21,8 +21,13 @@ npm i
 npm start
 ```
 
-( if you'd prefer to make a stand alone game instead run this command )
+( if you'd prefer to make a stand alone game instead run install electron-builder )
 
+```js
+npm i -g electron-builder
+```
+
+* Then run this command to build executable
 
 ```js
 electron-builder build
