@@ -1,16 +1,22 @@
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext('2d');
-canvas.width = 900;
-canvas.height = 600;
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 // canvas.style.top = `50%+100`;
 let canvasPosition = canvas.getBoundingClientRect();
 
 const notifyCanvas = document.getElementById("notifyCanvas");
 const notifyCtx = notifyCanvas.getContext('2d');
-notifyCanvas.width = canvas.width;
-notifyCanvas.height = canvas.height;
+notifyCanvas.width = window.innerWidth;
+notifyCanvas.height = 100;
 notifyCanvas.style.top = `${canvasPosition.top}px`;
 notifyCanvas.style.left = `${canvasPosition.left}px`;
+
+// Canvas dymensions
+let WIDTH = 900;
+let HEIGHT = 600;
+let CANVAS_WIDTH = 900;
+let CANVAS_HEIGHT = 600;
 
 // Cheats
 const cheats = {
@@ -21,7 +27,17 @@ const cheats = {
     speedShoot: false,
     powerShoot: false,
     fpsVisible:false,
+    graphicSmoothing: false,
+    preserveAspect: false,
 }
+
+// Graphic sharpness
+ctx.mozImageSmoothingEnabled = cheats.graphicSmoothing;
+ctx.msImageSmoothingEnabled = cheats.graphicSmoothing;
+ctx.imageSmoothingEnabled = cheats.graphicSmoothing;
+notifyCtx.mozImageSmoothingEnabled = cheats.graphicSmoothing;
+notifyCtx.msImageSmoothingEnabled = cheats.graphicSmoothing;
+notifyCtx.imageSmoothingEnabled = cheats.graphicSmoothing;
 
 let gameState = "MainMenu";
 const customFont = 'Orbitron'; // Verdana
@@ -238,36 +254,51 @@ const mouse = {
 }
 let clickTimer = 1;
 let canClick = false;
-// let canvasPosition = canvas.getBoundingClientRect();
 
 
 window.addEventListener('resize', function(){
-    // canvas.width = window.innerWidth;
-    // canvas.height = window.innerHeight;
-    canvasPosition = canvas.getBoundingClientRect();
-    // uiCanvas.style.top = `${canvasPosition.top}px`;
-    // uiCanvas.style.left = `${canvasPosition.left}px`;
-    // uiCanvasPosition = uiCanvas.getBoundingClientRect();
+    CANVAS_HEIGHT = window.innerHeight;
+    CANVAS_WIDTH = window.innerWidth;
 
-    notifyCanvas.style.top = `${canvasPosition.top}px`;
-    notifyCanvas.style.left = `${canvasPosition.left}px`;
-    notifyCanvas.width = canvas.width;
+    if (cheats.preserveAspect){
+        let ratio = 16 / 9;
+        if (CANVAS_HEIGHT < CANVAS_WIDTH / ratio){
+            CANVAS_WIDTH = CANVAS_HEIGHT * ratio;
+        } else {
+            CANVAS_HEIGHT = CANVAS_WIDTH / ratio;
+        }
+    }
+
+    canvas.height = HEIGHT;
+    canvas.width = WIDTH;
     notifyCanvas.height = canvas.height;
+    notifyCanvas.width = canvas.width;
+
+    canvas.style.height = `${CANVAS_HEIGHT}px`;
+    canvas.style.width = `${CANVAS_WIDTH}px`;
+    notifyCanvas.style.height = `${CANVAS_HEIGHT}px`;
+    notifyCanvas.style.width = `${CANVAS_WIDTH}px`;
+
+    canvasPosition = canvas.getBoundingClientRect();
 
     if (gameState === "Playing"){
         chooseTower();
+    } else {
+        update();
     }
-    
-
-    // ctx.scale(9,6);
-    // ctx.setTransform(1, 0, 0, 1, 0, 0);
 });
 
 
 // Mouse Move Event
 canvas.addEventListener('mousemove', function(e){
-    mouse.x = e.x - canvasPosition.left;
-    mouse.y = e.y - canvasPosition.top;
+    mouse.x = e.pageX - canvasPosition.left - scrollX;
+    mouse.y = e.pageY - canvasPosition.top - scrollY;
+
+    mouse.x /= canvasPosition.width; 
+    mouse.y /= canvasPosition.height; 
+
+    mouse.x *= canvas.width;
+    mouse.y *= canvas.height;
 
     if (mouse.y <= canvas.style.top+100){
         mouse.y = undefined;
@@ -275,7 +306,6 @@ canvas.addEventListener('mousemove', function(e){
             chooseTower();
         }
     }
-    // console.log(`x: ${mouse.uiX}  y: ${mouse.uiY}`);
 });
 
 
