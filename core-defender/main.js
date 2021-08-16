@@ -9,8 +9,6 @@ function createWindow () {
   const mainWindow = new BrowserWindow({
     width: 900,
     height: 600,
-    minWidth: 900+14,
-    minHeight: 600+41,
     autoHideMenuBar: true,
     webPreferences: {
       nodeIntegration: true,
@@ -23,7 +21,7 @@ function createWindow () {
   mainWindow.loadFile('index.html')
 
   // Open the DevTools.
-  // mainWindow.webContents.openDevTools()
+  mainWindow.webContents.openDevTools()
 }
 
 // This method will be called when Electron has finished
