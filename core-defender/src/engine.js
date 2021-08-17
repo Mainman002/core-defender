@@ -19,6 +19,10 @@ let CANVAS_WIDTH = 900;
 let CANVAS_HEIGHT = 600;
 
 // Cheats
+let keylog = "";
+let showCheatLog = false;
+let showCheatHelp = false;
+
 const cheats = {
     godMode: false,
     insaneMode: false,
@@ -41,6 +45,7 @@ notifyCtx.imageSmoothingEnabled = cheats.graphicSmoothing;
 
 let gameState = "MainMenu";
 const customFont = 'Orbitron'; // Verdana
+ctx.font = `70px ${customFont}`;
 
 // Global Variables
 globalThis.times = [];
@@ -99,10 +104,6 @@ const card1 = {
     animSpeed: 350,
 }
 
-if (cheats.highHP) card1.hp = 9000;
-if (cheats.speedShoot) card1.animSpeed = 2;
-if (cheats.powerShoot) card1.dmg = 9001;
-
 const card2 = {
     x: card1.x+cardOffset,
     y: 15,
@@ -117,10 +118,6 @@ const card2 = {
     animSpeed: 12,
 }
 
-if (cheats.highHP) card2.hp = 9000;
-if (cheats.speedShoot) card2.animSpeed = 2;
-if (cheats.powerShoot) card2.dmg = 9001;
-
 const card3 = {
     x: card2.x+cardOffset,
     y: 15,
@@ -134,10 +131,6 @@ const card3 = {
     speed: 7,
     animSpeed: 12,
 }
-
-if (cheats.highHP) card3.hp = 9000;
-if (cheats.speedShoot) card3.animSpeed = 2;
-if (cheats.powerShoot) card3.dmg = 9001;
 
 const card4 = {
     x: card3.x+cardOffset,
@@ -289,6 +282,40 @@ window.addEventListener('resize', function(){
 });
 
 
+// Extra resize window function
+function resizeWindow(){
+    CANVAS_HEIGHT = window.innerHeight;
+    CANVAS_WIDTH = window.innerWidth;
+
+    if (cheats.preserveAspect){
+        let ratio = 16 / 9;
+        if (CANVAS_HEIGHT < CANVAS_WIDTH / ratio){
+            CANVAS_WIDTH = CANVAS_HEIGHT * ratio;
+        } else {
+            CANVAS_HEIGHT = CANVAS_WIDTH / ratio;
+        }
+    }
+
+    canvas.height = HEIGHT;
+    canvas.width = WIDTH;
+    notifyCanvas.height = canvas.height;
+    notifyCanvas.width = canvas.width;
+
+    canvas.style.height = `${CANVAS_HEIGHT}px`;
+    canvas.style.width = `${CANVAS_WIDTH}px`;
+    notifyCanvas.style.height = `${CANVAS_HEIGHT}px`;
+    notifyCanvas.style.width = `${CANVAS_WIDTH}px`;
+
+    canvasPosition = canvas.getBoundingClientRect();
+
+    if (gameState === "Playing"){
+        chooseTower();
+    } else {
+        update();
+    }
+}
+
+
 // Mouse Move Event
 canvas.addEventListener('mousemove', function(e){
     mouse.x = e.pageX - canvasPosition.left - scrollX;
@@ -329,6 +356,7 @@ canvas.addEventListener('mousedown', function(e){
     if (gameState === "MainMenu" || gameState === "GameOver" || gameState === "WonLevel"){
         gameState = "Playing";
         reset();
+        resizeWindow();
     }
 
     const gridPositionX = mouse.x - (mouse.x % cellSize);
@@ -344,6 +372,8 @@ canvas.addEventListener('mousedown', function(e){
                 floatingMessages.push(new FloatingMessage("Deleted", "Red", 'center', mouse.x, gridPositionY+40, 25, 0.02)); 
                 tPower += towers[i].cost/2;
                 towers[i].delete(i);
+                towers.splice(i, 1);
+                i--;
             } 
         }
 
@@ -567,6 +597,10 @@ class Tower {
         this.dmg = aTower.dmg;
         this.speed = aTower.speed;
         this.resetTime = 0;
+
+        this.tdmg = this.dmg;
+        this.tspeed = this.fps;
+        this.thp = this.health;
     }
 
     // Remove tower
@@ -595,22 +629,43 @@ class Tower {
             this.frameRange.max = 0;
         }
 
+        if (showCheatLog) {
+            if (this.towerType === 1){
+                if (cheats.speedShoot) this.fps = 40;
+                else this.fps = this.tspeed;
+
+                if (cheats.highHP) this.health = 9001;
+                else this.health = this.thp;
+            }
+
+            if (this.towerType === 2 || this.towerType === 3){
+                if (cheats.powerShoot) this.tdmg = 9001;
+                else this.tdmg = this.dmg;
+
+                if (cheats.speedShoot) this.fps = 2;
+                else this.fps = this.tspeed;
+
+                if (cheats.highHP) this.health = 9001;
+                else this.health = this.thp;
+            }
+        }
+
         if (this.shooting && this.shootNow){
             if (this.towerType === 1){
                 if (!cheats.insaneMode) {
-                tResources.push(new towerResource(this.x + Math.random() * 50 + 20, this.y + Math.random() * 50 + 20, 25));
+                    tResources.push(new towerResource(this.x + Math.random() * 50 + 20, this.y + Math.random() * 50 + 20, 25));
                 } else {
                     tResources.push(new towerResource(this.x + Math.random() * 50 + 20, this.y + Math.random() * 50 + 20, 100));
                 }
             } 
 
             if (this.towerType === 2){
-                projectiles.push(new Projectile(this.x+this.width-13, this.y+25, this.towerType, this.dmg, this.speed));
+                projectiles.push(new Projectile(this.x+this.width-13, this.y+25, this.towerType, this.tdmg, this.tspeed));
             } 
 
             if (this.towerType === 3){
-                projectiles.push(new Projectile(this.x+this.width-12, this.y+25, this.towerType, this.dmg, this.speed));
-                projectiles.push(new Projectile(this.x+this.width-13, this.y+45, this.towerType, this.dmg, this.speed));
+                projectiles.push(new Projectile(this.x+this.width-12, this.y+25, this.towerType, this.tdmg, this.tspeed));
+                projectiles.push(new Projectile(this.x+this.width-13, this.y+45, this.towerType, this.tdmg, this.tspeed));
             } 
             this.shootNow = false;
         } 
@@ -647,10 +702,10 @@ function handleTowers(){
         }
         
         
-        for (let j = 0; j < enemies.length; j ++){
+        for (let j = 0; j < enemies.length; j++){
             if (towers[i] && enemies[j] && collision(towers[i], enemies[j])){
-            enemies[j].movement = 0; 
-            towers[i].health -= 1; 
+                enemies[j].movement = 0; 
+                towers[i].health -= 1; 
             }
             if (towers[i] && towers[i].health <= 0){
                 enemies[j].movement = enemies[j].speed;
@@ -732,11 +787,16 @@ function handleEnemies(){
         enemies[i].update();
         enemies[i].draw();
         if (enemies[i].x < 0){
-            if (!cheats.godMode) gameState = "GameOver";
-            enemies.length = 0;
-            towers.length = 0;
-            enemyPositions.length = 0;
-            projectiles.length = 0;
+            if (!cheats.godMode) { 
+                gameState = "GameOver";
+                enemies.length = 0;
+                towers.length = 0;
+                enemyPositions.length = 0;
+                projectiles.length = 0;
+            } else {
+                enemies.splice(i, 1);
+                i--;
+            }
         }
         if (enemies[i] && enemies[i].health <= 0){
             let gainedPower = enemies[i].maxHealth/10;
@@ -894,10 +954,15 @@ function chooseTower(){
             aTower.y = cards[`${i}`].y;
             aTower.type = cards[`${i}`].type;
             aTower.cost = cards[`${i}`].cost;
-            aTower.hp = cards[`${i}`].hp;
-            aTower.dmg = cards[`${i}`].dmg;
-            aTower.speed = cards[`${i}`].speed;
-            aTower.animSpeed = cards[`${i}`].animSpeed;
+
+            if (!cheats.speedShoot || !cheats.powerShoot || !cheats.highHP) {
+                aTower.hp = cards[`${i}`].hp;
+                aTower.dmg = cards[`${i}`].dmg;
+                aTower.speed = cards[`${i}`].speed;
+                aTower.animSpeed = cards[`${i}`].animSpeed;
+            } else {
+                cardRefresh();
+            }
         } else {
             cards[`${i}`].color = 'Black';
         }
@@ -919,6 +984,17 @@ function chooseTower(){
 
     notifyCtx.globalAlpha = 1;
 
+    // mouse.clicked = false;
+
+}
+
+
+// Update Cards Values
+function cardRefresh(){
+    aTower.hp = 9001;
+    aTower.dmg = 9001;
+    aTower.speed = 1;
+    aTower.animSpeed = 1;
 }
 
 
@@ -1013,6 +1089,7 @@ function startCountdown(){
 // Update game loop
 function update(){
     // uiCtx.clearRect(0,0,uiCanvas.width,uiCanvas.height);
+    let lineHeight = ctx.measureText(`Code: ${keylog}`).width;
     ctx.clearRect(0,0,canvas.width,canvas.height);
 
     for (let i = 0; i < cards.length; i++){
@@ -1073,6 +1150,40 @@ function update(){
         }
         requestAnimationFrame(update);
     }
+
+    // Cheat Input Menu
+    if (showCheatLog){
+        ctx.globalAlpha = .85;
+        ctx.fillStyle = 'Black';
+        ctx.fillRect(10, 130, lineHeight+10, 40);
+
+        ctx.globalAlpha = 1;
+        ctx.textAlign = 'left';
+        ctx.fillStyle = 'Teal';
+        ctx.font = `${25}px ${customFont}`;
+        ctx.fillText(`Code: ${keylog}`, 15, 160);
+
+        // Cheat Help Menu
+        if (showCheatHelp){
+            ctx.globalAlpha = .75;
+            ctx.fillStyle = 'Black';
+            ctx.fillRect(10, canvas.height-40-370, 300, 360);
+
+            ctx.globalAlpha = 1;
+            ctx.textAlign = 'left';
+            ctx.fillStyle = 'Teal';
+            ctx.font = `${25}px ${customFont}`;
+            ctx.fillText(`god mode: ${cheats.godMode}`, 30, canvas.height-40-340);
+            ctx.fillText(`insanity: ${cheats.insaneMode}`, 30, canvas.height-40-300);
+            ctx.fillText(`infinite power: ${cheats.infinitePower}`, 30, canvas.height-40-260);
+            ctx.fillText(`max hp: ${cheats.highHP}`, 30, canvas.height-40-220);
+            ctx.fillText(`speed: ${cheats.speedShoot}`, 30, canvas.height-40-180);
+            ctx.fillText(`power: ${cheats.powerShoot}`, 30, canvas.height-40-140);
+            ctx.fillText(`fps: ${cheats.fpsVisible}`, 30, canvas.height-40-100);
+            ctx.fillText(`smooth: ${cheats.graphicSmoothing}`, 30, canvas.height-40-60);
+            ctx.fillText(`aspect: ${cheats.preserveAspect}`, 30, canvas.height-40-20);
+        }
+    }
 }
 
 
@@ -1089,3 +1200,88 @@ function collision(first,second){
 };
 
 
+// Cheat Input Logger
+window.addEventListener('keydown', (e) => {
+    if (showCheatLog && e.key !== "Backspace" && e.key !== "Enter" && e.key !== "Shift" && e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "ArrowUp" && e.key !== "ArrowDown" && e.key !== "Control" && e.key !== "Alt") keylog += e.key;
+    if (e.key === "Backspace") keylog = keylog.slice(0, -1);
+
+    if (e.key === "`") keylog = "", showCheatLog = !showCheatLog;
+    if (e.key === "Enter"){
+        switch (keylog) {
+            case "help":
+                console.log(`god mode\ninsanity\ninfinite power\nmax hp\nspeed\npower\nfps\nsmooth\naspect`);
+                // showCheatLog = false;
+                showCheatHelp = !showCheatHelp;
+                break;
+
+            case "h":
+                console.log(`god mode\ninsanity\ninfinite power\nmax hp\nspeed\npower\nfps\nsmooth\naspect`);
+                // showCheatLog = false;
+                showCheatHelp = !showCheatHelp;
+                break;
+
+            case "god mode":
+                cheats.godMode = !cheats.godMode;
+                console.log(`godMode:${cheats.godMode}`);
+                // showCheatLog = false;
+                break;
+
+            case "insanity":
+                cheats.insaneMode = !cheats.insaneMode;
+                console.log(`insaneMode:${cheats.insaneMode}`);
+                // showCheatLog = false;
+                break;
+            
+            case "infinite power":
+                cheats.infinitePower = !cheats.infinitePower;
+                console.log(`infinitePower:${cheats.infinitePower}`);
+                // showCheatLog = false;
+                break;
+
+            case "max hp":
+                cheats.highHP = !cheats.highHP;
+                console.log(`highHP:${cheats.highHP}`);
+                // showCheatLog = false;
+                break;
+
+            case "speed":
+                cheats.speedShoot = !cheats.speedShoot;
+                console.log(`speedShoot:${cheats.speedShoot}`);
+                // showCheatLog = false;
+                break;
+
+            case "power":
+                cheats.powerShoot = !cheats.powerShoot;
+                console.log(`powerShoot:${cheats.powerShoot}`);
+                // showCheatLog = false;
+                break;
+
+            case "fps":
+                cheats.fpsVisible = !cheats.fpsVisible;
+                console.log(`fpsVisible:${cheats.fpsVisible}`);
+                // showCheatLog = false;
+                break;
+
+            case "smooth":
+                cheats.graphicSmoothing = !cheats.graphicSmoothing;
+                console.log(`graphicSmoothing:${cheats.graphicSmoothing}`);
+                // showCheatLog = false;
+                break;
+
+            case "aspect":
+                cheats.preserveAspect = !cheats.preserveAspect;
+                console.log(`preserveAspect:${cheats.preserveAspect}`);
+                // showCheatLog = false;
+                break;
+        }
+        // showCheatLog = false;
+        keylog = "";
+    }
+
+    // console.log(`Key:${e.key}`);
+    // keylog = "";
+    cardRefresh();
+});
+
+
+// resizeWindow();
