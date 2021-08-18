@@ -25,6 +25,7 @@ let showCheatHelp = false;
 
 const cheats = {
     godMode: false,
+    slowMotion: false,
     insaneMode: false,
     infinitePower: false,
     highHP: false,
@@ -33,6 +34,8 @@ const cheats = {
     fpsVisible:false,
     graphicSmoothing: false,
     preserveAspect: false,
+    gameOver: false,
+    instaWin: false,
 }
 
 // Graphic sharpness
@@ -372,7 +375,6 @@ canvas.addEventListener('mousedown', function(e){
                 floatingMessages.push(new FloatingMessage("Deleted", "Red", 'center', mouse.x, gridPositionY+40, 25, 0.02)); 
                 tPower += towers[i].cost/2;
                 towers[i].delete(i);
-                towers.splice(i, 1);
                 i--;
             } 
         }
@@ -606,7 +608,6 @@ class Tower {
     // Remove tower
     delete(i){
         towers.splice(i, 1);
-        i--;
     }
 
     // Tower update function
@@ -941,7 +942,7 @@ function chooseTower(){
     notifyCtx.clearRect(0, 0, notifyCanvas.width, notifyCanvas.height);
 
     notifyCtx.fillStyle = `rgb(27, 35, 39)`;
-    notifyCtx.fillRect(0,0,controlBar.width,controlBar.height);
+    notifyCtx.fillRect(0,0,canvas.width,controlBar.height);
 
     notifyCtx.lineWidth = 3;
     notifyCtx.globalAlpha = 0.2;
@@ -1044,22 +1045,45 @@ function handleFloatingMessages(){
     }
 }
 
+let canWin = true;
 
 // UI Status
 function handleGameStatus(){
     if (gameState !== "GameOver" && score >= winningScore && enemies.length <= 0){
-        gameState = "WonLevel";
+        if (canWin) {
+            let winFloat = setTimeout(() => {
+                floatingMessages.push(new FloatingMessage(`You Survived!`, "Gold", 'center', canvas.width/2, canvas.height/2, 60, 0.02));
+                clearTimeout(winFloat);
+                winFloat = 0;
+            }, 100);
+
+            let winOver = setTimeout(() => {
+                gameState = "WonLevel";
+                clearTimeout(winOver);
+                winOver = 0;
+            }, 2000);
+            canWin = false;
+        }
     }
 
     if (gameState === "GameOver"){
+        keylog = "";
+        showCheatLog = false;
+        canWin = true;
         gameOver();
     }
 
     if (gameState === "WonLevel"){
+        keylog = "";
+        showCheatLog = false;
+        canWin = true;
         wonLevel();
     }
 
     if (gameState === "MainMenu"){
+        keylog = "";
+        showCheatLog = false;
+        canWin = true;
         mainMenu();
     }
 
@@ -1111,6 +1135,7 @@ function update(){
     handleGameStatus();
     handleFloatingMessages();
     startCountdown();
+    cheatHandler(lineHeight);
 
     // Show fps if cheats fpsVisible is true
     if (cheats.fpsVisible){
@@ -1149,40 +1174,15 @@ function update(){
             canClick = true;
         }
         requestAnimationFrame(update);
-    }
-
-    // Cheat Input Menu
-    if (showCheatLog){
-        ctx.globalAlpha = .85;
-        ctx.fillStyle = 'Black';
-        ctx.fillRect(10, 130, lineHeight+10, 40);
-
-        ctx.globalAlpha = 1;
-        ctx.textAlign = 'left';
-        ctx.fillStyle = 'Teal';
-        ctx.font = `${25}px ${customFont}`;
-        ctx.fillText(`Code: ${keylog}`, 15, 160);
-
-        // Cheat Help Menu
-        if (showCheatHelp){
-            ctx.globalAlpha = .75;
-            ctx.fillStyle = 'Black';
-            ctx.fillRect(10, canvas.height-40-370, 300, 360);
-
-            ctx.globalAlpha = 1;
-            ctx.textAlign = 'left';
-            ctx.fillStyle = 'Teal';
-            ctx.font = `${25}px ${customFont}`;
-            ctx.fillText(`god mode: ${cheats.godMode}`, 30, canvas.height-40-340);
-            ctx.fillText(`insanity: ${cheats.insaneMode}`, 30, canvas.height-40-300);
-            ctx.fillText(`infinite power: ${cheats.infinitePower}`, 30, canvas.height-40-260);
-            ctx.fillText(`max hp: ${cheats.highHP}`, 30, canvas.height-40-220);
-            ctx.fillText(`speed: ${cheats.speedShoot}`, 30, canvas.height-40-180);
-            ctx.fillText(`power: ${cheats.powerShoot}`, 30, canvas.height-40-140);
-            ctx.fillText(`fps: ${cheats.fpsVisible}`, 30, canvas.height-40-100);
-            ctx.fillText(`smooth: ${cheats.graphicSmoothing}`, 30, canvas.height-40-60);
-            ctx.fillText(`aspect: ${cheats.preserveAspect}`, 30, canvas.height-40-20);
-        }
+        // if (cheats.slowMotion){
+        //     setTimeout(() => {
+        //         requestAnimationFrame(update);
+        //     }, 1000 / 30);
+        // } else {
+        //     setTimeout(() => {
+        //         requestAnimationFrame(update);
+        //     }, 1000 / 60);
+        // }
     }
 }
 
@@ -1202,11 +1202,41 @@ function collision(first,second){
 
 // Cheat Input Logger
 window.addEventListener('keydown', (e) => {
-    if (showCheatLog && e.key !== "Backspace" && e.key !== "Enter" && e.key !== "Shift" && e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "ArrowUp" && e.key !== "ArrowDown" && e.key !== "Control" && e.key !== "Alt") keylog += e.key;
-    if (e.key === "Backspace") keylog = keylog.slice(0, -1);
 
+    const excludeBtns = ["AudioVolumeUp", "AudioVolumeDown", "ScrollLock", "Pause", "PageUp", "PageDown", "ArrowRight",
+    "Home", "Insert", "End", "Delete", "CapsLock", "Tab", "Backspace", "Enter", "Shift", "ArrowLeft", "ArrowUp", "NumLock", 
+    "ArrowDown", "Control", "Alt", "F1","F2","F3","F4","F5","F6","F7","F8","F9","F10","F11", "F12", "Meta"]; 
+
+    let btnP = true;
+    btnP = true;
+
+    if (showCheatLog) {
+        // If button pressed in exclude list skip
+        for (const btn of excludeBtns) {
+            switch (e.key){
+                case `${btn}`:
+                    btnP = false;
+            }
+        }
+
+        // If button not in exclude list add letter to keylog
+        if (btnP){
+            console.log(`Good: ${e.key}`);
+            keylog += e.key;
+        }
+
+    // Erase last key pressed
+    if (e.key === "Backspace") keylog = keylog.slice(0, -1);
+    } 
+
+    // Tab key pressed
+    // if (e.key === "Tab") keylog += "    ";
+
+    // Open Cheat Menu
     if (e.key === "`") keylog = "", showCheatLog = !showCheatLog;
-    if (e.key === "Enter"){
+
+    // Enter Cheat Code
+    if (showCheatLog && e.key === "Enter"){
         switch (keylog) {
             case "help":
                 console.log(`god mode\ninsanity\ninfinite power\nmax hp\nspeed\npower\nfps\nsmooth\naspect`);
@@ -1273,6 +1303,26 @@ window.addEventListener('keydown', (e) => {
                 console.log(`preserveAspect:${cheats.preserveAspect}`);
                 // showCheatLog = false;
                 break;
+
+            // case "slow":
+            //     cheats.slowMotion = !cheats.slowMotion;
+            //     console.log(`slowMotion:${cheats.slowMotion}`);
+            //     // showCheatLog = false;
+            //     break;
+
+            case "game over man":
+                // cheats.preserveAspect = !cheats.preserveAspect;
+                console.log(`Game Over Man!`);
+                gameState = "GameOver";
+                // showCheatLog = false;
+                break;
+
+            case "winner":
+                // cheats.preserveAspect = !cheats.preserveAspect;
+                console.log(`Winner!`);
+                gameState = "WonLevel";
+                // showCheatLog = false;
+                break;
         }
         // showCheatLog = false;
         keylog = "";
@@ -1282,6 +1332,52 @@ window.addEventListener('keydown', (e) => {
     // keylog = "";
     cardRefresh();
 });
+
+
+function cheatHandler(lineHeight){
+    // Cheat Input Menu
+    if (showCheatLog){
+        ctx.globalAlpha = .85;
+        ctx.fillStyle = 'Black';
+        ctx.fillRect(10, 130, lineHeight+10, 40);
+
+        ctx.globalAlpha = 1;
+        ctx.textAlign = 'left';
+        ctx.fillStyle = 'Teal';
+        ctx.font = `${25}px ${customFont}`;
+        ctx.fillText(`Code: ${keylog}`, 15, 160);
+
+        // Cheat Help Menu
+        if (showCheatHelp){
+            const topOffset = 140;
+            const offset = 30;
+
+            ctx.globalAlpha = .75;
+            ctx.fillStyle = 'Black';
+            ctx.fillRect(10, topOffset+40, 300, 400);
+
+            ctx.globalAlpha = 1;
+            ctx.textAlign = 'left';
+            ctx.fillStyle = 'Teal';
+            ctx.font = `${25}px ${customFont}`;
+
+            // for (let i = 0; i < 11; i++){
+            ctx.fillText(`god mode: ${cheats.godMode}`, 30, topOffset+40+offset);
+            ctx.fillText(`insanity: ${cheats.insaneMode}`, 30, topOffset+40+offset*2);
+            ctx.fillText(`infinite power: ${cheats.infinitePower}`, 30, topOffset+40+offset*3);
+            ctx.fillText(`max hp: ${cheats.highHP}`, 30, topOffset+40+offset*4);
+            ctx.fillText(`speed: ${cheats.speedShoot}`, 30, topOffset+40+offset*5);
+            ctx.fillText(`power: ${cheats.powerShoot}`, 30, topOffset+40+offset*6);
+            ctx.fillText(`fps: ${cheats.fpsVisible}`, 30, topOffset+40+offset*7);
+            ctx.fillText(`smooth: ${cheats.graphicSmoothing}`, 30, topOffset+40+offset*8);
+            ctx.fillText(`aspect: ${cheats.preserveAspect}`, 30, topOffset+40+offset*9);
+            ctx.fillText(`game over man`, 30, topOffset+40+offset*10);
+            ctx.fillText(`winner`, 30, topOffset+40+offset*11);
+                // if (i > 10) break; 
+            // }
+        }
+    }
+}
 
 
 // resizeWindow();
