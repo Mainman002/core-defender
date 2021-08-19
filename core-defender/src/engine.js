@@ -1207,21 +1207,10 @@ window.addEventListener('keydown', (e) => {
     "Home", "Insert", "End", "Delete", "CapsLock", "Tab", "Backspace", "Enter", "Shift", "ArrowLeft", "ArrowUp", "NumLock", 
     "ArrowDown", "Control", "Alt", "F1","F2","F3","F4","F5","F6","F7","F8","F9","F10","F11", "F12", "Meta"]; 
 
-    let btnP = true;
-    btnP = true;
-
     if (showCheatLog) {
-        // If button pressed in exclude list skip
-        for (const btn of excludeBtns) {
-            switch (e.key){
-                case `${btn}`:
-                    btnP = false;
-            }
-        }
 
         // If button not in exclude list add letter to keylog
-        if (btnP){
-            console.log(`Good: ${e.key}`);
+        if (!excludeBtns.includes(e.key)){
             keylog += e.key;
         }
 
