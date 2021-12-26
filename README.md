@@ -37,6 +37,9 @@ electron-builder build
 
 ![image](https://user-images.githubusercontent.com/11281480/129467895-d1a41b19-8c03-45cc-8823-b72a0827d180.png)
 
+Can also be played from a web browser
+https://mainman002.github.io/core-defender/
+
 
 
 
